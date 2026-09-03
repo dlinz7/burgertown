@@ -1,12 +1,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import {
-  API_CATALOG,
-  DEMO_FLOWS,
-  apiGraph,
-  blastRadius,
-} from "@/server/catalog"
-import { buildOpenApi, isApiId } from "@/server/openapi"
+import { API_CATALOG } from "@/server/catalog"
+import { buildOpenApi } from "@/server/openapi"
 import {
   HttpError,
   addLineItem,
@@ -41,7 +36,6 @@ import {
   resetStore,
   salesReport,
   sendOrder,
-  setContractDrift,
   voidCheck,
 } from "@/server/store"
 
@@ -71,7 +65,7 @@ app.get("/health", (c) =>
   c.json({
     ok: true,
     company: "Burgertown",
-    product: "POS sandbox",
+    product: "POS",
     apis: API_CATALOG.length,
   })
 )
@@ -91,53 +85,20 @@ app.get("/v1/meta/apis", (c) =>
       domain: api.domain,
       description: api.description,
       depends_on: api.dependsOn,
-      blast_radius: blastRadius(api.id).dependents,
       operations: api.operations.map((op) => ({
         id: op.id,
         method: op.method,
         path: op.path,
         summary: op.summary,
-        failures: op.failures,
       })),
     })),
   })
 )
 
-app.get("/v1/meta/graph", (c) => c.json(apiGraph()))
-app.get("/v1/meta/flows", (c) => c.json({ flows: DEMO_FLOWS }))
-app.get("/v1/meta/blast-radius/:api_id", (c) => {
-  const apiId = c.req.param("api_id")
-  if (!isApiId(apiId)) {
-    throw new HttpError(404, "api_not_found", "Unknown API id")
-  }
-  return c.json(blastRadius(apiId))
-})
-
-app.get("/v1/sandbox", (c) => {
-  const store = getStore()
-  return c.json({
-    contract_drift: store.contractDrift,
-    fixtures: {
-      success_check: "chk_ok",
-      declined_check: "chk_declined",
-      timeout_check: "chk_timeout",
-      refund_check: "chk_paid",
-      eighty_sixed_item: "itm_86",
-      gift_card: "gf_25",
-    },
-  })
-})
-
 app.post("/v1/sandbox", async (c) => {
   const body = await c.req.json().catch(() => ({}))
-  if (body.reset) resetStore()
-  if (typeof body.contract_drift === "boolean") {
-    setContractDrift(body.contract_drift)
-  }
-  return c.json({
-    ok: true,
-    contract_drift: getStore().contractDrift,
-  })
+  if (body.reset !== false) resetStore()
+  return c.json({ ok: true })
 })
 
 app.get("/v1/locations", (c) => c.json({ data: getStore().locations }))

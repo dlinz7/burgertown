@@ -2,7 +2,7 @@
 
 Copied from the working Burgertown POS sandbox so a later website rewrite does not overwrite this graph.
 
-This folder is **not imported** by the live app. Leave it alone while iterating on `src/`. Restore by copying files back to the original paths.
+This folder is **not imported** by the live app and is excluded from TypeScript/ESLint. Leave it alone while iterating on `src/`. Restore by copying files back to the original paths.
 
 ## What this is
 

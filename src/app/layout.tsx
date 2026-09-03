@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Providers } from "@/components/providers"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import "./globals.css"
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s · Burgertown POS",
   },
   description:
-    "Fake POS company sandbox with 25 interconnected APIs for Atlas workflow generation.",
+    "Restaurant point-of-sale APIs for Burgertown: floor, menu, checks, payments, and back-office.",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <SiteHeader />
           <main className="flex-1">{children}</main>
+          <SiteFooter />
         </Providers>
       </body>
     </html>

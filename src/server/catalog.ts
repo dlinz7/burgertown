@@ -54,7 +54,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "locations",
     name: "Locations",
     domain: "venue",
-    description: "Restaurants in the Burgertown POS. Oak Street is the seeded demo store.",
+    description: "Restaurants this merchant operates. Oak Street is the seeded store.",
     dependsOn: [],
     operations: [
       {
@@ -81,7 +81,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "floor",
     name: "Floor",
     domain: "venue",
-    description: "Tables and sections. Pay-at-table starts by resolving a table to an open check.",
+    description: "Tables and sections. A table may point at the current open check.",
     dependsOn: ["locations"],
     operations: [
       {
@@ -108,7 +108,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "menus",
     name: "Menus",
     domain: "menu",
-    description: "Published menus the pay-at-table screen renders after transform.",
+    description: "Published menus for a location, grouped into categories.",
     dependsOn: ["locations"],
     operations: [
       {
@@ -135,8 +135,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "catalog",
     name: "Catalog",
     domain: "menu",
-    description:
-      "Items and prices. Changing this contract (price vs unit_amount) is the blast-radius demo.",
+    description: "Sellable items and prices. Orders, checks, and payments read this catalog.",
     dependsOn: ["menus"],
     operations: [
       {
@@ -144,7 +143,7 @@ export const API_CATALOG: ApiDef[] = [
         method: "GET",
         path: "/v1/catalog/items",
         summary: "List catalog items",
-        description: "Sellable items. Schema drifts when sandbox contract_drift is on.",
+        description: "Sellable items including price and tax_ids.",
         successStatus: 200,
         failures: [],
       },
@@ -329,7 +328,7 @@ export const API_CATALOG: ApiDef[] = [
         path: "/v1/checks/{check_id}",
         summary: "Get a check",
         description:
-          "Seeded: chk_ok (pay success), chk_declined, chk_timeout, chk_paid (refund).",
+          "Open ticket with line items, totals, and table assignment.",
         successStatus: 200,
         failures: [{ status: 404, code: "check_not_found", when: "Unknown check_id" }],
       },
@@ -414,7 +413,7 @@ export const API_CATALOG: ApiDef[] = [
     name: "Payments",
     domain: "money",
     description:
-      "Tender a check. Creates a pending payment; Processor captures it. chk_declined and chk_timeout are failure fixtures.",
+      "Tender a check. Creates a pending payment; Processor captures it.",
     dependsOn: ["checks", "taxes", "discounts"],
     operations: [
       {
@@ -446,7 +445,7 @@ export const API_CATALOG: ApiDef[] = [
     name: "Processor",
     domain: "money",
     description:
-      "Stripe-shaped charge and refund API the POS does not own. Marketplace contract stand-in for Stripe.",
+      "Card processor charges and refunds. Payments call this after a pending tender is created.",
     dependsOn: ["payments"],
     operations: [
       {
@@ -455,11 +454,11 @@ export const API_CATALOG: ApiDef[] = [
         path: "/v1/processor/charges",
         summary: "Charge a payment method",
         description:
-          "Body: payment_id, payment_method. chk_declined → card_declined 402. chk_timeout → 504.",
+          "Body: payment_id, payment_method. Use pm_ok, pm_decline, or pm_timeout.",
         successStatus: 201,
         failures: [
-          { status: 402, code: "card_declined", when: "Payment is on chk_declined or pm_decline" },
-          { status: 504, code: "processor_timeout", when: "Payment is on chk_timeout" },
+          { status: 402, code: "card_declined", when: "payment_method is pm_decline" },
+          { status: 504, code: "processor_timeout", when: "payment_method is pm_timeout" },
           { status: 404, code: "payment_not_found", when: "Unknown payment_id" },
         ],
       },
@@ -468,7 +467,7 @@ export const API_CATALOG: ApiDef[] = [
         method: "POST",
         path: "/v1/processor/refunds",
         summary: "Reverse a charge",
-        description: "Stripe-shaped refund against a captured charge.",
+        description: "Refund against a captured charge.",
         successStatus: 201,
         failures: [
           { status: 404, code: "charge_not_found", when: "Unknown charge_id" },
@@ -481,7 +480,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "invoices",
     name: "Invoices",
     domain: "money",
-    description: "After a successful charge, the pay-at-table app posts the invoice back onto the POS check.",
+    description: "Posted onto a check after a payment is captured.",
     dependsOn: ["payments", "checks"],
     operations: [
       {
@@ -528,7 +527,7 @@ export const API_CATALOG: ApiDef[] = [
         method: "GET",
         path: "/v1/checks/{check_id}/receipt",
         summary: "Get receipt for a check",
-        description: "Convenience read used by the pay-at-table screen.",
+        description: "Receipt for a check, if one has been posted.",
         successStatus: 200,
         failures: [{ status: 404, code: "receipt_not_found", when: "Check has no receipt yet" }],
       },
@@ -752,134 +751,3 @@ export const DOMAIN_LABELS: Record<ApiDef["domain"], string> = {
 export function getApi(id: ApiId) {
   return API_CATALOG.find((api) => api.id === id)!
 }
-
-export function dependentsOf(id: ApiId): ApiId[] {
-  const found = new Set<ApiId>()
-  const walk = (current: ApiId) => {
-    for (const api of API_CATALOG) {
-      if (api.dependsOn.includes(current) && !found.has(api.id)) {
-        found.add(api.id)
-        walk(api.id)
-      }
-    }
-  }
-  walk(id)
-  return [...found]
-}
-
-export function blastRadius(id: ApiId) {
-  return {
-    api: id,
-    dependsOn: getApi(id).dependsOn,
-    dependents: dependentsOf(id),
-  }
-}
-
-export type GraphNode = {
-  id: ApiId
-  name: string
-  domain: ApiDef["domain"]
-  layer: number
-  column: number
-  dependsOn: ApiId[]
-  dependents: ApiId[]
-}
-
-export function apiGraph() {
-  const layers: ApiId[][] = []
-  const remaining = new Set(API_IDS)
-  const placed = new Set<ApiId>()
-
-  while (remaining.size > 0) {
-    const layer = [...remaining].filter((id) =>
-      getApi(id).dependsOn.every((dep) => placed.has(dep))
-    )
-    const next = layer.length > 0 ? layer : [[...remaining][0]]
-    layers.push(next)
-    for (const id of next) {
-      remaining.delete(id)
-      placed.add(id)
-    }
-  }
-
-  const nodes: GraphNode[] = layers.flatMap((layer, layerIndex) =>
-    layer.map((id, column) => {
-      const api = getApi(id)
-      return {
-        id,
-        name: api.name,
-        domain: api.domain,
-        layer: layerIndex,
-        column,
-        dependsOn: api.dependsOn,
-        dependents: dependentsOf(id),
-      }
-    })
-  )
-
-  const edges = API_CATALOG.flatMap((api) =>
-    api.dependsOn.map((from) => ({ from, to: api.id }))
-  )
-
-  return { nodes, edges, layers: layers.length }
-}
-
-export const DEMO_FLOWS = [
-  {
-    id: "pay_at_table",
-    name: "Pay at table",
-    description:
-      "Guest taps pay. POS check is fetched, Processor (Stripe-shaped) charges, invoice is posted back, receipt offers a tip.",
-    successFixture: "chk_ok",
-    failureFixtures: ["chk_declined", "chk_timeout"],
-    steps: [
-      { api: "floor" as ApiId, method: "GET" as const, path: "/v1/tables/tbl_4", note: "Resolve table to check" },
-      { api: "checks" as ApiId, method: "GET" as const, path: "/v1/checks/chk_ok", note: "Fetch open check" },
-      { api: "payments" as ApiId, method: "POST" as const, path: "/v1/payments", note: "Create pending tender" },
-      {
-        api: "processor" as ApiId,
-        method: "POST" as const,
-        path: "/v1/processor/charges",
-        note: "Capture (fails on chk_declined / chk_timeout)",
-      },
-      { api: "invoices" as ApiId, method: "POST" as const, path: "/v1/invoices", note: "Post invoice onto POS" },
-      { api: "receipts" as ApiId, method: "GET" as const, path: "/v1/checks/chk_ok/receipt", note: "Show receipt" },
-      { api: "tips" as ApiId, method: "POST" as const, path: "/v1/payments/{payment_id}/tip", note: "Optional tip" },
-    ],
-  },
-  {
-    id: "refund",
-    name: "Refund pipeline",
-    description:
-      "Guest asks for a refund. POS accepts, Processor reverses the charge, POS returns a voided check confirmation.",
-    successFixture: "chk_paid",
-    failureFixtures: ["chk_ok"],
-    steps: [
-      { api: "checks" as ApiId, method: "GET" as const, path: "/v1/checks/chk_paid", note: "Paid check" },
-      { api: "refunds" as ApiId, method: "POST" as const, path: "/v1/refunds", note: "POS accepts request" },
-      {
-        api: "processor" as ApiId,
-        method: "POST" as const,
-        path: "/v1/processor/refunds",
-        note: "Reverse Stripe-shaped charge",
-      },
-      { api: "voids" as ApiId, method: "POST" as const, path: "/v1/checks/chk_paid/void", note: "Voided check" },
-    ],
-  },
-  {
-    id: "menu_order",
-    name: "Menu ordering",
-    description:
-      "POS menu is transformed for pay-at-table, guest adds items, POS confirms (inventory + kitchen + check).",
-    successFixture: "itm_townie",
-    failureFixtures: ["itm_86"],
-    steps: [
-      { api: "menus" as ApiId, method: "GET" as const, path: "/v1/menus/menu_dinner", note: "Fetch menu tree" },
-      { api: "catalog" as ApiId, method: "GET" as const, path: "/v1/catalog/items", note: "Hydrate prices" },
-      { api: "orders" as ApiId, method: "POST" as const, path: "/v1/checks/chk_ok/items", note: "Select items" },
-      { api: "inventory" as ApiId, method: "GET" as const, path: "/v1/inventory/itm_86", note: "86 check (failure path)" },
-      { api: "orders" as ApiId, method: "POST" as const, path: "/v1/checks/chk_ok/send", note: "POS confirm" },
-      { api: "kitchen" as ApiId, method: "GET" as const, path: "/v1/kds/tickets", note: "KDS ticket opened" },
-    ],
-  },
-]

@@ -12,10 +12,6 @@ export function resetStore() {
   return store
 }
 
-export function setContractDrift(on: boolean) {
-  store.contractDrift = on
-}
-
 function id(prefix: string) {
   return `${prefix}_${randomUUID().slice(0, 8)}`
 }
@@ -67,15 +63,7 @@ export function checkTotals(check: Check) {
 }
 
 export function presentItem(item: Store["items"][number]) {
-  if (!store.contractDrift) {
-    return item
-  }
-  const { name, price, ...rest } = item
-  return {
-    ...rest,
-    display_name: name,
-    unit_amount: price,
-  }
+  return item
 }
 
 export function requireLocation(idValue: string) {
@@ -174,7 +162,6 @@ export function createCheck(input: {
     guest_id: input.guest_id ?? null,
     server_id: input.server_id,
     status: "open",
-    scenario: null,
     items: [],
     discount_ids: [],
     payment_ids: [],
@@ -300,13 +287,12 @@ export function createPayment(input: {
 
 export function captureCharge(input: { payment_id: string; payment_method?: string }) {
   const payment = requirePayment(input.payment_id)
-  const check = requireCheck(payment.check_id)
   const method = input.payment_method ?? "pm_ok"
 
-  if (check.scenario === "timeout" || method === "pm_timeout") {
+  if (method === "pm_timeout") {
     throw new HttpError(504, "processor_timeout", "Processor timed out contacting the card network")
   }
-  if (check.scenario === "declined" || method === "pm_decline") {
+  if (method === "pm_decline") {
     payment.status = "declined"
     const charge = {
       id: id("ch"),

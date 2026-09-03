@@ -1,10 +1,4 @@
-import {
-  API_CATALOG,
-  DEMO_FLOWS,
-  apiGraph,
-  blastRadius,
-  type ApiId,
-} from "@/server/catalog"
+import { API_CATALOG, type ApiId } from "@/server/catalog"
 
 function opPathToOpenApi(path: string) {
   return path.replace(/{([^}]+)}/g, "{$1}")
@@ -72,54 +66,16 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
     get: {
       operationId: "listApis",
       tags: ["Meta"],
-      summary: "List the 25 POS APIs",
+      summary: "List the 25 POS APIs and which APIs they depend on",
       responses: { "200": { description: "API catalog" } },
     },
   }
-  paths["/v1/meta/graph"] = {
-    get: {
-      operationId: "getGraph",
-      tags: ["Meta"],
-      summary: "Nodes and edges for blast-radius visualization",
-      responses: { "200": { description: "Graph" } },
-    },
-  }
-  paths["/v1/meta/flows"] = {
-    get: {
-      operationId: "listFlows",
-      tags: ["Meta"],
-      summary: "Demo workflows Atlas can generate against",
-      responses: { "200": { description: "Flows" } },
-    },
-  }
-  paths["/v1/meta/blast-radius/{api_id}"] = {
-    get: {
-      operationId: "getBlastRadius",
-      tags: ["Meta"],
-      summary: "APIs that break if this contract changes",
-      parameters: [
-        {
-          name: "api_id",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-        },
-      ],
-      responses: { "200": { description: "Blast radius" } },
-    },
-  }
   paths["/v1/sandbox"] = {
-    get: {
-      operationId: "getSandbox",
-      tags: ["Sandbox"],
-      summary: "Sandbox flags including contract_drift",
-      responses: { "200": { description: "Sandbox state" } },
-    },
     post: {
-      operationId: "updateSandbox",
+      operationId: "resetSandbox",
       tags: ["Sandbox"],
-      summary: "Toggle contract drift or reset fixtures",
-      responses: { "200": { description: "Updated sandbox" } },
+      summary: "Reset in-memory store to the seeded Oak Street location",
+      responses: { "200": { description: "Reset" } },
     },
   }
 
@@ -129,27 +85,24 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
       title: "Burgertown POS",
       version: "1.0.0",
       description:
-        "Fake POS company sandbox for Atlas. 25 interconnected APIs with success and failure fixtures. Import this contract into the Atlas marketplace.",
-      contact: { name: "Burgertown Sandbox", email: "pos@burgertown.dev" },
+        "Restaurant point-of-sale API for Burgertown. 25 resource APIs covering the floor, menu, service, money, and back-office. Resource references (check_id, item_id, payment_id, and so on) are how these APIs connect.",
+      contact: { name: "Burgertown POS", email: "pos@burgertown.dev" },
     },
-    servers: [{ url: origin, description: "Local sandbox" }],
+    servers: [{ url: origin, description: "Burgertown POS" }],
     tags: [
       ...API_CATALOG.map((api) => ({
         name: api.name,
         description: api.description,
         "x-api-id": api.id,
         "x-depends-on": api.dependsOn,
-        "x-blast-radius": blastRadius(api.id).dependents,
       })),
-      { name: "Meta", description: "Catalog, graph, and demo flows" },
-      { name: "Sandbox", description: "Reset fixtures and toggle contract drift" },
+      { name: "Meta", description: "API index" },
+      { name: "Sandbox", description: "Reset seeded store data" },
     ],
     "x-burgertown": {
       company: "Burgertown",
       kind: "pos",
       api_count: API_CATALOG.length,
-      graph: apiGraph(),
-      flows: DEMO_FLOWS,
     },
     paths,
     components: {
@@ -175,7 +128,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
           type: "apiKey",
           in: "header",
           name: "X-API-Key",
-          description: "Optional. Any string is accepted in the sandbox.",
+          description: "Optional. Any string is accepted.",
         },
       },
     },

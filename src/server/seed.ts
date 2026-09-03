@@ -96,7 +96,6 @@ export type Check = {
   guest_id: string | null
   server_id: string
   status: "open" | "paid" | "voided"
-  scenario: "ok" | "declined" | "timeout" | null
   items: LineItem[]
   discount_ids: string[]
   payment_ids: string[]
@@ -197,7 +196,6 @@ export type Settlement = {
 }
 
 export type Store = {
-  contractDrift: boolean
   locations: Location[]
   tables: Table[]
   menus: Menu[]
@@ -293,19 +291,11 @@ export function createSeed(): Store {
     location_id: "loc_oak",
     label: `Table ${index + 1}`,
     seats: index === 6 ? 6 : 4,
-    status: index + 1 === 4 || index + 1 === 2 || index + 1 === 7 ? "occupied" : "open",
-    check_id:
-      index + 1 === 4
-        ? "chk_ok"
-        : index + 1 === 2
-          ? "chk_declined"
-          : index + 1 === 7
-            ? "chk_timeout"
-            : null,
+    status: index + 1 === 4 || index + 1 === 2 ? "occupied" : "open",
+    check_id: index + 1 === 4 ? "chk_ok" : index + 1 === 2 ? "chk_12" : null,
   }))
 
   return {
-    contractDrift: false,
     locations: [
       {
         id: "loc_oak",
@@ -382,7 +372,6 @@ export function createSeed(): Store {
         guest_id: "gst_maya",
         server_id: "emp_jon",
         status: "open",
-        scenario: "ok",
         items: [
           {
             id: "li_1",
@@ -410,13 +399,12 @@ export function createSeed(): Store {
         opened_at: now,
       },
       {
-        id: "chk_declined",
+        id: "chk_12",
         location_id: "loc_oak",
         table_id: "tbl_2",
         guest_id: null,
         server_id: "emp_jon",
         status: "open",
-        scenario: "declined",
         items: [
           {
             id: "li_d1",
@@ -435,38 +423,12 @@ export function createSeed(): Store {
         opened_at: now,
       },
       {
-        id: "chk_timeout",
-        location_id: "loc_oak",
-        table_id: "tbl_7",
-        guest_id: null,
-        server_id: "emp_renee",
-        status: "open",
-        scenario: "timeout",
-        items: [
-          {
-            id: "li_t1",
-            item_id: "itm_jalapeno",
-            name: "Jalapeño Smash",
-            quantity: 2,
-            price: 1300,
-            sent: true,
-            modifier_ids: [],
-          },
-        ],
-        discount_ids: [],
-        payment_ids: [],
-        invoice_id: null,
-        receipt_id: null,
-        opened_at: now,
-      },
-      {
         id: "chk_paid",
         location_id: "loc_oak",
         table_id: "tbl_1",
         guest_id: "gst_maya",
         server_id: "emp_jon",
         status: "paid",
-        scenario: "ok",
         items: [
           {
             id: "li_p1",
@@ -544,8 +506,8 @@ export function createSeed(): Store {
     giftCards: [{ id: "gf_25", balance_cents: 2500, last4: "4412" }],
     webhooks: [
       {
-        id: "wh_atlas",
-        url: "https://atlas.example/hooks/burgertown",
+        id: "wh_partner",
+        url: "https://partner.example/hooks/burgertown",
         events: ["payment.captured", "order.sent", "refund.accepted", "check.voided"],
       },
     ],

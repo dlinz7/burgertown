@@ -1,8 +1,10 @@
-# Burgertown POS sandbox
+# Burgertown POS
 
-Fake POS company for **Atlas**. Burgertown exposes **25 interconnected APIs** so a workflow graph looks like a real restaurant business, with success and failure fixtures, and a blast radius when a contract changes.
+Dummy restaurant POS company. Burgertown is a fictional client: twenty-five HTTP APIs covering the floor, menu, service, money movement, and back-office.
 
-This is not a diner website. It is the POS vendor a pay-at-table product (Mr. Yum-style) would integrate with.
+This repo is **not** an Atlas product. It is the business Atlas would import. Connectivity is in the specs (`depends_on` / OpenAPI `x-depends-on`). Workflow generation, blast radius, and error classification stay in Atlas.
+
+A frozen copy of an earlier graph UI is in [`saved/visualization/`](saved/visualization/). The live site does not use it.
 
 ## Run
 
@@ -11,98 +13,36 @@ npm install
 npm run dev
 ```
 
-App: [http://127.0.0.1:43123](http://127.0.0.1:43123)
+[http://127.0.0.1:43123](http://127.0.0.1:43123)
 
 | Resource | URL |
 | --- | --- |
-| Visualization | `/` |
-| OpenAPI contract (Atlas import) | `/openapi.json` |
+| Company | `/` |
+| API list | `/apis` |
+| OpenAPI | `/openapi.json` |
 | Health | `/health` |
-| API catalog | `/v1/meta/apis` |
-| Dependency graph | `/v1/meta/graph` |
-| Demo flows | `/v1/meta/flows` |
+| API index | `/v1/meta/apis` |
 
-No real Stripe, POS, or auth. Optional header `X-API-Key` is accepted and ignored.
+In-memory store. `POST /v1/sandbox` with `{ "reset": true }` restores Oak Street.
 
-## Saved visualization
+## Specs
 
-A frozen copy of the graph UI lives in [`saved/visualization/`](saved/visualization/). The live app still uses `src/`. That folder is a snapshot so a website rewrite does not lose the blast-radius graph.
+25 tagged APIs. Each operation carries `x-depends-on` — which other Burgertown APIs that resource needs. Examples:
 
-## What Atlas should import
+- **Orders** depends on Checks, Catalog, Modifiers, Inventory
+- **Payments** depends on Checks, Taxes, Discounts
+- **Processor** depends on Payments
+- **Invoices** depend on Payments and Checks
+- **Reports** depend on Settlements, Checks, Payments
 
-Point the marketplace / contract import at `/openapi.json`. Tags are the 25 APIs. Each tag includes:
-
-- `x-api-id`
-- `x-depends-on`
-- `x-blast-radius` (downstream APIs)
-
-`info.x-burgertown.graph` is the full node/edge map.
-
-## The 25 APIs
-
-Venue: **Locations**, **Floor**  
-Menu: **Menus**, **Catalog**, **Modifiers**, **Taxes**, **Discounts**, **Inventory**  
-Service: **Guests**, **Employees**, **Checks**, **Orders**, **Kitchen**  
-Money: **Payments**, **Processor** (Stripe-shaped), **Invoices**, **Receipts**, **Tips**, **Refunds**, **Voids**, **Loyalty**, **Gift Cards**  
-Ops: **Webhooks**, **Settlements**, **Reports**
-
-Processor is the external contract the POS does not own. That is the marketplace stand-in for Stripe.
-
-## Demo flows
-
-### Pay at table
-
-`tbl_4` → `chk_ok` → payment → processor charge → invoice back to POS → receipt → tip.
-
-Failure fixtures:
-
-- `chk_declined` / `tbl_2` → processor `402 card_declined`
-- `chk_timeout` / `tbl_7` → processor `504 processor_timeout`
-
-### Refund pipeline
-
-`chk_paid` → refund accepted → processor reverse (`ch_paid`) → void confirmation.
-
-Failure: `POST /v1/checks/chk_ok/void` → `409 void_not_allowed` (no reversed refund).
-
-### Menu ordering
-
-`GET /v1/menus/menu_dinner` → catalog hydrate → `POST /v1/checks/chk_ok/items` → send (inventory + KDS).
-
-Failure: add `itm_86` → `409 item_86`.
-
-## Blast radius
-
-`POST /v1/sandbox` with `{ "contract_drift": true }` changes Catalog from `name` / `price` to `display_name` / `unit_amount`. Downstream APIs that consume Catalog (orders, checks, payments, invoices, receipts, reports, …) are the blast radius.
-
-```bash
-curl -X POST http://127.0.0.1:43123/v1/sandbox \
-  -H 'content-type: application/json' \
-  -d '{"contract_drift":true}'
-
-curl http://127.0.0.1:43123/v1/catalog/items
-curl http://127.0.0.1:43123/v1/meta/blast-radius/catalog
-```
-
-Reset fixtures (in-memory):
-
-```bash
-curl -X POST http://127.0.0.1:43123/v1/sandbox \
-  -H 'content-type: application/json' \
-  -d '{"reset":true,"contract_drift":false}'
-```
-
-## Seeded ids
+## Seeded IDs
 
 | Id | Role |
 | --- | --- |
 | `loc_oak` | Oak Street store |
-| `tbl_4` / `chk_ok` | Happy-path open check |
-| `tbl_2` / `chk_declined` | Card declined |
-| `tbl_7` / `chk_timeout` | Processor timeout |
-| `chk_paid` / `pay_paid` / `ch_paid` | Already-paid check for refunds |
-| `itm_86` | 86'd menu item |
-| `gf_25` | $25 gift card |
-| `gst_maya` | Loyalty guest |
+| `tbl_4` / `chk_ok` | Open check |
+| `chk_paid` / `pay_paid` / `ch_paid` | Closed check with a captured payment |
+| `itm_86` | 86'd menu item (ordering it returns 409) |
+| `gf_25` | Gift card with $25.00 |
 
-Amounts are integer cents.
+Amounts are integer cents. Processor `payment_method` values: `pm_ok`, `pm_decline`, `pm_timeout`.
