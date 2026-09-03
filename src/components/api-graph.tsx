@@ -78,25 +78,34 @@ export function ApiGraph({ selected, onSelect, highlight, broken }: Props) {
             <g
               key={node.id}
               transform={`translate(${node.x} ${node.y})`}
-              className="cursor-pointer"
-              onClick={() => onSelect(node.id)}
+              role="button"
+              tabIndex={0}
+              aria-label={node.name}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  onSelect(node.id)
+                }
+              }}
             >
               <rect
                 width={nodeW}
                 height={nodeH}
                 rx={10}
                 className={cn(
+                  "cursor-pointer",
                   DOMAIN_COLOR[node.domain],
                   isBroken && "fill-red-100 stroke-red-500",
                   isSelected && "stroke-2",
                   !isLit && !isBroken && selected && "opacity-40"
                 )}
+                onClick={() => onSelect(node.id)}
               />
               <text
                 x={nodeW / 2}
                 y={21}
                 textAnchor="middle"
-                className="fill-foreground text-[11px] font-semibold"
+                className="pointer-events-none fill-foreground text-[11px] font-semibold"
               >
                 {node.name}
               </text>
@@ -104,7 +113,7 @@ export function ApiGraph({ selected, onSelect, highlight, broken }: Props) {
                 x={nodeW / 2}
                 y={36}
                 textAnchor="middle"
-                className="fill-muted-foreground text-[9px]"
+                className="pointer-events-none fill-muted-foreground text-[9px]"
               >
                 {node.id}
               </text>

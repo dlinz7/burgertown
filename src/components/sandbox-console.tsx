@@ -83,10 +83,14 @@ export function SandboxConsole() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant={drift ? "destructive" : "outline"} onClick={toggleDrift}>
+          <Button
+            type="button"
+            variant={drift ? "destructive" : "outline"}
+            onClick={toggleDrift}
+          >
             {drift ? "Repair Catalog contract" : "Break Catalog contract"}
           </Button>
-          <Button variant="outline" onClick={reset}>
+          <Button type="button" variant="outline" onClick={reset}>
             Reset fixtures
           </Button>
         </div>
@@ -102,6 +106,7 @@ export function SandboxConsole() {
         ).map(([id, label]) => (
           <Button
             key={id}
+            type="button"
             variant={tab === id ? "default" : "outline"}
             onClick={() => setTab(id)}
           >
@@ -129,6 +134,25 @@ export function SandboxConsole() {
               highlight={highlight}
               broken={broken}
             />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {API_CATALOG.map((api) => (
+                <button
+                  key={api.id}
+                  type="button"
+                  onClick={() => setSelected(api.id)}
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[11px]",
+                    selected === api.id
+                      ? "bg-foreground text-background"
+                      : broken.has(api.id)
+                        ? "bg-red-100 text-red-800"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {api.name}
+                </button>
+              ))}
+            </div>
           </div>
           <aside className="rounded-2xl border bg-card p-5">
             <Badge variant="secondary">{DOMAIN_LABELS[selectedApi.domain]}</Badge>
