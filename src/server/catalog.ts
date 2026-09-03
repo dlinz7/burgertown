@@ -751,3 +751,74 @@ export const DOMAIN_LABELS: Record<ApiDef["domain"], string> = {
 export function getApi(id: ApiId) {
   return API_CATALOG.find((api) => api.id === id)!
 }
+
+export function dependentsOf(id: ApiId): ApiId[] {
+  const found = new Set<ApiId>()
+  const walk = (current: ApiId) => {
+    for (const api of API_CATALOG) {
+      if (api.dependsOn.includes(current) && !found.has(api.id)) {
+        found.add(api.id)
+        walk(api.id)
+      }
+    }
+  }
+  walk(id)
+  return [...found]
+}
+
+export function apiLinks(id: ApiId) {
+  return {
+    api: id,
+    dependsOn: getApi(id).dependsOn,
+    dependents: dependentsOf(id),
+  }
+}
+
+export type GraphNode = {
+  id: ApiId
+  name: string
+  domain: ApiDef["domain"]
+  layer: number
+  column: number
+  dependsOn: ApiId[]
+  dependents: ApiId[]
+}
+
+export function apiGraph() {
+  const layers: ApiId[][] = []
+  const remaining = new Set(API_IDS)
+  const placed = new Set<ApiId>()
+
+  while (remaining.size > 0) {
+    const layer = [...remaining].filter((id) =>
+      getApi(id).dependsOn.every((dep) => placed.has(dep))
+    )
+    const next = layer.length > 0 ? layer : [[...remaining][0]]
+    layers.push(next)
+    for (const id of next) {
+      remaining.delete(id)
+      placed.add(id)
+    }
+  }
+
+  const nodes: GraphNode[] = layers.flatMap((layer, layerIndex) =>
+    layer.map((id, column) => {
+      const api = getApi(id)
+      return {
+        id,
+        name: api.name,
+        domain: api.domain,
+        layer: layerIndex,
+        column,
+        dependsOn: api.dependsOn,
+        dependents: dependentsOf(id),
+      }
+    })
+  )
+
+  const edges = API_CATALOG.flatMap((api) =>
+    api.dependsOn.map((from) => ({ from, to: api.id }))
+  )
+
+  return { nodes, edges, layers: layers.length }
+}

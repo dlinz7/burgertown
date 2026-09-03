@@ -4,6 +4,7 @@ const links = [
   { href: "/menu", label: "Menu" },
   { href: "/tables", label: "Tables" },
   { href: "/kitchen", label: "Kitchen" },
+  { href: "/apis", label: "APIs" },
 ]
 
 export function SiteHeader() {

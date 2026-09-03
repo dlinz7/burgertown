@@ -4,7 +4,7 @@ Fictional smash-burger restaurant on Oak Street in Rivertown. Guests sit at picn
 
 Twenty-five HTTP APIs sit behind that: floor, menu, tickets, kitchen, payments, and back-office. Connectivity is in the specs (`depends_on` / OpenAPI `x-depends-on`).
 
-A frozen copy of an earlier graph UI is in [`saved/visualization/`](saved/visualization/). The live site does not use it.
+The live API graph and list live at `/apis`. A frozen snapshot of an earlier sandbox is in [`saved/visualization/`](saved/visualization/).
 
 ## Run
 
@@ -21,6 +21,7 @@ npm run dev
 | Menu | `/menu` |
 | Tables | `/tables` |
 | Kitchen | `/kitchen` |
+| APIs | `/apis` |
 | OpenAPI | `/openapi.json` |
 | Health | `/health` |
 | API index | `/v1/meta/apis` |
