@@ -24,6 +24,10 @@ App: [http://127.0.0.1:43123](http://127.0.0.1:43123)
 
 No real Stripe, POS, or auth. Optional header `X-API-Key` is accepted and ignored.
 
+## Saved visualization
+
+A frozen copy of the graph UI lives in [`saved/visualization/`](saved/visualization/). The live app still uses `src/`. That folder is a snapshot so a website rewrite does not lose the blast-radius graph.
+
 ## What Atlas should import
 
 Point the marketplace / contract import at `/openapi.json`. Tags are the 25 APIs. Each tag includes:
