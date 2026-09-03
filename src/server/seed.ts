@@ -4,6 +4,8 @@ export type Location = {
   id: string
   name: string
   address: { street: string; city: string; region: string; postal_code: string }
+  phone: string
+  hours: { label: string; value: string }[]
   timezone: string
   currency: "USD"
 }
@@ -306,6 +308,13 @@ export function createSeed(): Store {
           region: "OR",
           postal_code: "97035",
         },
+        phone: "(503) 555-0140",
+        hours: [
+          { label: "Tuesday – Thursday", value: "11:00 AM – 9:00 PM" },
+          { label: "Friday – Saturday", value: "11:00 AM – 11:00 PM" },
+          { label: "Sunday", value: "11:00 AM – 8:00 PM" },
+          { label: "Monday", value: "Closed" },
+        ],
         timezone: "America/Los_Angeles",
         currency: "USD",
       },
@@ -453,6 +462,12 @@ export function createSeed(): Store {
         check_id: "chk_ok",
         item_ids: ["li_1", "li_2"],
         status: "fired",
+      },
+      {
+        id: "kds_12",
+        check_id: "chk_12",
+        item_ids: ["li_d1"],
+        status: "queued",
       },
     ],
     payments: [

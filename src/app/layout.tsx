@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Burgertown POS",
-    template: "%s · Burgertown POS",
+    default: "Burgertown",
+    template: "%s · Burgertown",
   },
   description:
-    "Restaurant point-of-sale APIs for Burgertown: floor, menu, checks, payments, and back-office.",
+    "Smash burgers, picnic tables, and thick shakes on Oak Street in Rivertown.",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -65,7 +65,7 @@ app.get("/health", (c) =>
   c.json({
     ok: true,
     company: "Burgertown",
-    product: "POS",
+    product: "restaurant",
     apis: API_CATALOG.length,
   })
 )

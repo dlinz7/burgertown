@@ -423,7 +423,7 @@ export function processorRefund(input: { charge_id: string; refund_id?: string }
       ? store.refunds.find((row) => row.id === input.refund_id)
       : store.refunds.find((row) => row.payment_id === payment.id)) ?? null
   if (!refund) {
-    throw new HttpError(404, "refund_not_found", "POS has not accepted a refund for this charge")
+    throw new HttpError(404, "refund_not_found", "Burgertown has not accepted a refund for this charge")
   }
   const row = {
     id: id("prf"),

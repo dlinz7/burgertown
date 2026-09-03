@@ -2,7 +2,7 @@ import { API_CATALOG, DOMAIN_LABELS } from "@/server/catalog"
 
 export const metadata = {
   title: "APIs",
-  description: "Twenty-five Burgertown POS APIs and which resources they depend on.",
+  description: "Twenty-five Burgertown APIs and which resources they depend on.",
 }
 
 export default function ApisPage() {

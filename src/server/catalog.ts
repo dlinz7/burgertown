@@ -487,7 +487,7 @@ export const API_CATALOG: ApiDef[] = [
         id: "createInvoice",
         method: "POST",
         path: "/v1/invoices",
-        summary: "Post invoice to POS",
+        summary: "Post invoice to the check",
         description: "Attaches a captured payment to the check and marks the check paid.",
         successStatus: 201,
         failures: [
@@ -500,7 +500,7 @@ export const API_CATALOG: ApiDef[] = [
         method: "GET",
         path: "/v1/invoices/{invoice_id}",
         summary: "Get an invoice",
-        description: "Invoice posted back to the POS.",
+        description: "Invoice posted back onto the check.",
         successStatus: 200,
         failures: [{ status: 404, code: "invoice_not_found", when: "Unknown invoice_id" }],
       },
@@ -559,7 +559,7 @@ export const API_CATALOG: ApiDef[] = [
     id: "refunds",
     name: "Refunds",
     domain: "money",
-    description: "Guest refund request. POS accepts, then Processor reverses, then Voids the check.",
+    description: "Guest refund request. Burgertown accepts, then Processor reverses, then Voids the check.",
     dependsOn: ["payments", "processor"],
     operations: [
       {
@@ -567,7 +567,7 @@ export const API_CATALOG: ApiDef[] = [
         method: "POST",
         path: "/v1/refunds",
         summary: "Request a refund",
-        description: "POS accepts the request. Next step is processor refund, then void.",
+        description: "Burgertown accepts the request. Next step is processor refund, then void.",
         successStatus: 201,
         failures: [
           { status: 404, code: "payment_not_found", when: "Unknown payment_id" },
