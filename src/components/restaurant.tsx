@@ -385,13 +385,17 @@ type Visit = {
   modifiers: Modifier[]
 }
 
-async function loadVisit(tableId: string): Promise<Visit> {
+async function loadVisit(
+  tableId: string,
+  fallbackCheckId: string | null
+): Promise<Visit> {
   const [nextTable, staff, mods] = await Promise.all([
     api.table(tableId),
     api.employees(),
     api.modifiers(),
   ])
-  if (!nextTable.check_id) {
+  const checkId = nextTable.check_id ?? fallbackCheckId
+  if (!checkId) {
     return {
       table: nextTable,
       check: null,
@@ -402,7 +406,7 @@ async function loadVisit(tableId: string): Promise<Visit> {
       modifiers: mods.data,
     }
   }
-  const nextCheck = await api.check(nextTable.check_id)
+  const nextCheck = await api.check(checkId)
   const server = staff.data.find((row) => row.id === nextCheck.server_id) ?? null
   const receipt =
     nextCheck.status === "paid" && nextCheck.receipt_id
@@ -428,7 +432,10 @@ async function loadVisit(tableId: string): Promise<Visit> {
 }
 
 export function TableVisit({ tableId }: { tableId: string }) {
-  const { data, error, loading, reload } = useLoad(() => loadVisit(tableId))
+  const paidCheckId = useRef<string | null>(null)
+  const { data, error, loading, reload } = useLoad(() =>
+    loadVisit(tableId, paidCheckId.current)
+  )
   const [working, setWorking] = useState<string | null>(null)
   const check = data?.check ?? null
   const table = data?.table ?? null
@@ -441,6 +448,7 @@ export function TableVisit({ tableId }: { tableId: string }) {
   async function seat() {
     setWorking("seat")
     try {
+      paidCheckId.current = null
       await api.openCheck(tableId)
       toast.success("Table seated")
       reload({ quiet: true })
@@ -484,10 +492,11 @@ export function TableVisit({ tableId }: { tableId: string }) {
     setWorking("pay")
     try {
       const paymentId = await api.pay(check)
+      paidCheckId.current = check.id
       if (check.guest_id) {
         await api.earnLoyalty(check.guest_id, paymentId).catch(() => null)
       }
-      toast.success("Card captured. Receipt is ready.")
+      toast.success("Card captured. Add a tip below if you like.")
       reload({ quiet: true })
     } catch (err) {
       toast.error(failMessage(err))
@@ -529,11 +538,13 @@ export function TableVisit({ tableId }: { tableId: string }) {
           {server ? ` · ${server.name}` : ""}
         </p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          {check
-            ? guest
-              ? `${guest.name}’s ticket`
-              : "Your ticket"
-            : "This table is open"}
+          {check?.status === "paid"
+            ? "Thanks — you’re paid up"
+            : check
+              ? guest
+                ? `${guest.name}’s ticket`
+                : "Your ticket"
+              : "This table is open"}
         </h1>
         {!check ? (
           <div className="mt-6 space-y-4">
@@ -665,20 +676,36 @@ export function TableVisit({ tableId }: { tableId: string }) {
                     : null}
                 </p>
                 {receipt.tip_cents === 0 && receipt.tip_eligible ? (
-                  <div className="mt-3 flex gap-2">
-                    {[15, 20, 25].map((percent) => (
-                      <Button
-                        key={percent}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={working === "tip"}
-                        onClick={() => addTip(percent)}
-                      >
-                        {percent}%
-                      </Button>
-                    ))}
-                  </div>
+                  <>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Add a tip for {server?.name ?? "the window"}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      {[15, 20, 25].map((percent) => (
+                        <Button
+                          key={percent}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={working === "tip"}
+                          onClick={() => addTip(percent)}
+                        >
+                          {percent}%
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+                {table?.status === "open" && !table.check_id ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    onClick={seat}
+                    disabled={working === "seat"}
+                  >
+                    Seat next party
+                  </Button>
                 ) : null}
               </div>
             ) : null}
