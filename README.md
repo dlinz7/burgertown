@@ -4,6 +4,8 @@ Fictional smash-burger restaurant on Oak Street in Rivertown. Guests sit at picn
 
 Twenty-five HTTP APIs sit behind that: floor, menu, tickets, kitchen, payments, and back-office. Connectivity is in the specs (`depends_on` / OpenAPI `x-depends-on`).
 
+Agent handoff for those APIs: [`HANDOFF.md`](HANDOFF.md).
+
 The live API graph and list live at `/apis`. A frozen snapshot of an earlier sandbox is in [`saved/visualization/`](saved/visualization/).
 
 ## Run
