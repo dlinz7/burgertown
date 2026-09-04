@@ -101,7 +101,9 @@ app.get("/health", (c) =>
 
 app.get("/openapi.json", (c) => {
   const origin = new URL(c.req.url).origin
-  return c.json(buildOpenApi(origin))
+  return c.json(buildOpenApi(origin), 200, {
+    "Content-Type": "application/json; charset=utf-8",
+  })
 })
 
 app.get("/v1/meta/apis", (c) =>

@@ -14,12 +14,21 @@ export default function ApisPage() {
       <h1 className="mt-3 text-4xl font-semibold tracking-tight">35 APIs</h1>
       <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
         Floor, menu, fulfillment, kitchen, delivery, rewards, payments, and
-        back-office. Each API names the others it reads or writes. Machine-readable
-        copy is at{" "}
+        back-office. Import the OpenAPI document into Atlas from{" "}
         <a className="underline" href="/openapi.json">
           /openapi.json
         </a>
-        .
+        . Each operation carries request schemas, seeded examples,{" "}
+        <code className="text-xs">x-depends-on</code>, and typed error codes.
+      </p>
+      <p className="mt-3">
+        <a
+          href="/openapi.json"
+          download="burgertown.openapi.json"
+          className="text-sm underline"
+        >
+          Download burgertown.openapi.json
+        </a>
       </p>
       <div className="mt-8">
         <ApiExplorer />

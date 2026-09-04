@@ -59,11 +59,13 @@ Scopes: `checks`, `delivery`, `rewards`, `inventory`, `settlements`, `all` (defa
 | Guest restaurant | `/` `/menu` `/order` `/rewards` |
 | Staff (unlinked from guest nav) | `/tables` `/tables/{tableId}` `/kitchen` |
 | API graph + list | `/apis` |
-| OpenAPI 3.1 | `GET /openapi.json` (each operation has `x-depends-on`) |
+| OpenAPI 3.1 | `GET /openapi.json` — typed schemas, examples, `x-depends-on`, `x-error-codes`. Static copy: `openapi.json` at repo root. |
 | API index | `GET /v1/meta/apis` (depends_on per API) |
 | Health | `GET /health` |
 
 Guest checkout opens a **pickup fulfillment**, then a check, then pays by card. Picnic-table pay-at-table (workflow A) still works via `/tables/tbl_4`. There is no dispatch board in the restaurant UI — dispatch is API-only so Atlas can generate the long delivery chain.
+
+**Atlas import:** `GET /openapi.json` (live) or the `openapi.json` file in the repo root. OpenAPI 3.1. Request bodies, response schemas, seeded examples, `x-depends-on` per operation, `x-error-codes` on every error status, `x-retryable` on `503 no_courier_available`.
 
 Source of truth for the 35 APIs: `src/server/catalog.ts`. Handlers: `src/server/app.ts`. Behavior: `src/server/store.ts`. Seed: `src/server/seed.ts`. OpenAPI builder: `src/server/openapi.ts`. Modifier validation: `src/server/modifiers.ts`.
 
@@ -609,7 +611,8 @@ src/server/store.ts         Behavior
 src/server/modifiers.ts     Selection validation, price rollup
 src/server/errors.ts        HttpError envelope
 src/server/seed.ts          Oak Street fixtures
-src/server/openapi.ts       /openapi.json
+src/server/openapi.ts       OpenAPI 3.1 builder (schemas, examples, x-depends-on, x-error-codes)
+openapi.json                Static copy for Atlas file import. Regenerate with `npm run openapi`.
 src/lib/burgertown.ts       Browser client used by the restaurant UI
 src/components/customer.tsx Guest menu, bag, rewards
 src/components/restaurant.tsx  Staff tables + kitchen (unlinked)

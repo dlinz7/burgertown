@@ -36,7 +36,9 @@ Order pickup, pay by card, earn punches. Sign in as Maya Chen (`maya@example.com
 
 ## Specs
 
-35 tagged APIs. Each operation carries `x-depends-on`. `GET /v1/loyalty/...` 308s to `/v1/rewards/...`.
+35 tagged APIs. Import into Atlas from **`GET /openapi.json`** (OpenAPI 3.1) or the `openapi.json` file in this repo. Each operation has request/response schemas, seeded examples, `x-depends-on`, and `x-error-codes`. `503 no_courier_available` is marked `x-retryable`.
+
+`GET /v1/loyalty/...` 308s to `/v1/rewards/...`.
 
 - **Fulfillment** sits between the floor and the check (dine-in, pickup, delivery)
 - **Payments** depends on Checks, Taxes, Discounts, Redemptions
