@@ -3,10 +3,9 @@ import { ArrowRight } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import {
   FeaturedMenu,
-  FloorPlan,
   LocationBanner,
   LocationHours,
-} from "@/components/restaurant"
+} from "@/components/customer"
 import { cn } from "@/lib/utils"
 
 export default function Home() {
@@ -22,8 +21,7 @@ export default function Home() {
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-muted-foreground">
             A walk-up window, picnic tables, and smash burgers on a toasted
-            potato bun. No reservations. Sit down, order off the board, pay when
-            you are done.
+            potato bun. Order on your phone, pick up at the window, eat outside.
           </p>
           <div className="mt-4">
             <LocationBanner />
@@ -33,14 +31,14 @@ export default function Home() {
               href="/menu"
               className={cn(buttonVariants({ size: "lg" }), "gap-1.5")}
             >
-              See the menu
+              Order pickup
               <ArrowRight />
             </Link>
             <Link
-              href="/tables/tbl_4"
+              href="/rewards"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
             >
-              Maya’s table
+              Join Townie Rewards
             </Link>
           </div>
         </div>
@@ -50,28 +48,14 @@ export default function Home() {
         <section>
           <h2 className="text-xl font-semibold">On the board tonight</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Live from the kitchen catalog.
+            Smash burgers, shoestring fries, hand-spun shakes.
           </p>
           <div className="mt-6">
             <FeaturedMenu />
           </div>
-        </section>
-
-        <section className="mt-16">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold">Out front</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Eight picnic tables. Seated ones already have a ticket.
-              </p>
-            </div>
-            <Link href="/tables" className="text-sm underline">
-              All tables
-            </Link>
-          </div>
-          <div className="mt-6">
-            <FloorPlan compact />
-          </div>
+          <Link href="/menu" className="mt-4 inline-block text-sm underline">
+            Full menu
+          </Link>
         </section>
 
         <section className="mt-16 grid gap-8 sm:grid-cols-2">
@@ -82,17 +66,14 @@ export default function Home() {
             </div>
           </div>
           <div className="rounded-2xl border bg-card p-6">
-            <h2 className="font-semibold">The window</h2>
+            <h2 className="font-semibold">How it works</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Cash or card. We 86 the malt when we run out. Ask about the punch
-              card if you have been here before. Kitchen tickets fire as soon as
-              you send the order.
+              Order here, pay by card, we call your name at the window. Picnic
+              tables out front — no reservations. Townie Rewards: ten punches
+              gets you fries.
             </p>
-            <Link
-              href="/kitchen"
-              className="mt-4 inline-block text-sm underline"
-            >
-              Peek at the rail
+            <Link href="/rewards" className="mt-4 inline-block text-sm underline">
+              Get a punch card
             </Link>
           </div>
         </section>

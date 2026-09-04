@@ -8,6 +8,7 @@ const DOMAIN_COLOR: Record<GraphNode["domain"], string> = {
   venue: "fill-stone-200 stroke-stone-400",
   menu: "fill-amber-100 stroke-amber-500",
   service: "fill-sky-100 stroke-sky-500",
+  delivery: "fill-orange-100 stroke-orange-500",
   money: "fill-emerald-100 stroke-emerald-600",
   ops: "fill-violet-100 stroke-violet-500",
 }
@@ -20,16 +21,16 @@ type Props = {
 
 export function ApiGraph({ selected, onSelect, highlight }: Props) {
   const graph = useMemo(() => apiGraph(), [])
-  const width = 1120
-  const height = Math.max(620, 48 + graph.layers * 78)
-  const nodeW = 132
-  const nodeH = 46
+  const width = 1280
+  const height = Math.max(720, 48 + graph.layers * 72)
+  const nodeW = 118
+  const nodeH = 42
 
   const positioned = graph.nodes.map((node) => {
     const layerNodes = graph.nodes.filter((row) => row.layer === node.layer)
     const x =
       ((node.column + 1) / (layerNodes.length + 1)) * (width - 80) + 40 - nodeW / 2
-    const y = 28 + node.layer * 78
+    const y = 24 + node.layer * 72
     return { ...node, x, y, cx: x + nodeW / 2, cy: y + nodeH / 2 }
   })
 

@@ -46,6 +46,9 @@ export function ApiExplorer({ initialTab = "graph" }: { initialTab?: "graph" | "
                 <span className="size-2 rounded-sm bg-sky-300" /> Service
               </span>
               <span className="inline-flex items-center gap-1.5">
+                <span className="size-2 rounded-sm bg-orange-300" /> Delivery
+              </span>
+              <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-sm bg-emerald-400" /> Money
               </span>
               <span className="inline-flex items-center gap-1.5">

@@ -66,7 +66,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
     get: {
       operationId: "listApis",
       tags: ["Meta"],
-      summary: "List the 25 Burgertown APIs and which APIs they depend on",
+      summary: `List the ${API_CATALOG.length} Burgertown APIs and which APIs they depend on`,
       responses: { "200": { description: "API catalog" } },
     },
   }
@@ -85,7 +85,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
       title: "Burgertown",
       version: "1.0.0",
       description:
-        "Restaurant APIs for Burgertown on Oak Street. Twenty-five resources covering the floor, menu, tickets, kitchen, payments, and back-office. Resource references (check_id, item_id, payment_id, and so on) are how these APIs connect.",
+        "Restaurant APIs for Burgertown on Oak Street. Thirty-five resources covering the floor, menu, fulfillment, kitchen, delivery, rewards, payments, and back-office. Resource references (check_id, fulfillment_id, payment_id, and so on) are how these APIs connect.",
       contact: { name: "Burgertown", email: "hello@burgertown.dev" },
     },
     servers: [{ url: origin, description: "Burgertown Oak Street" }],
@@ -101,7 +101,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
     ],
     "x-burgertown": {
       company: "Burgertown",
-      kind: "pos",
+      kind: "restaurant",
       api_count: API_CATALOG.length,
     },
     paths,
