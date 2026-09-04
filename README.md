@@ -23,7 +23,7 @@ npm run dev
 | Menu | `/menu` |
 | Order / bag | `/order` |
 | Townie Rewards | `/rewards` |
-| Partner APIs | `/apis` |
+| APIs (graph + list) | `/apis` |
 | OpenAPI | `/openapi.json` |
 | Health | `/health` |
 | API index | `/v1/meta/apis` |
