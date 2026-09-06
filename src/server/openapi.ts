@@ -16,6 +16,194 @@ function ref(name: string) {
   return { $ref: `#/components/schemas/${name}` }
 }
 
+function idRef(name: string) {
+  return { $ref: `#/components/schemas/${name}` }
+}
+
+const ID_SCHEMAS: Record<string, Record<string, unknown>> = {
+  LocationId: {
+    type: "string",
+    description: "Restaurant location identifier.",
+    minLength: 1,
+    examples: ["loc_oak"],
+  },
+  TableId: {
+    type: "string",
+    description: "Picnic-table identifier.",
+    minLength: 1,
+    examples: ["tbl_4"],
+  },
+  ZoneId: {
+    type: "string",
+    description: "Delivery-zone identifier.",
+    minLength: 1,
+    examples: ["zone_oak_core"],
+  },
+  MenuId: {
+    type: "string",
+    description: "Menu identifier.",
+    minLength: 1,
+    examples: ["menu_dinner"],
+  },
+  ItemId: {
+    type: "string",
+    description: "Catalog item identifier.",
+    minLength: 1,
+    examples: ["itm_townie"],
+  },
+  ModifierGroupId: {
+    type: "string",
+    description: "Modifier-group identifier.",
+    minLength: 1,
+    examples: ["modg_patty"],
+  },
+  ModifierId: {
+    type: "string",
+    description: "Modifier-option identifier.",
+    minLength: 1,
+    examples: ["mod_bacon"],
+  },
+  GuestId: {
+    type: "string",
+    description: "Guest identifier.",
+    minLength: 1,
+    examples: ["gst_maya"],
+  },
+  AddressId: {
+    type: "string",
+    description: "Guest address identifier.",
+    minLength: 1,
+    examples: ["addr_maya"],
+  },
+  EmployeeId: {
+    type: "string",
+    description: "Employee identifier.",
+    minLength: 1,
+    examples: ["emp_jon"],
+  },
+  FulfillmentId: {
+    type: "string",
+    description: "Fulfillment identifier.",
+    minLength: 1,
+    examples: ["ful_dine_4"],
+  },
+  CheckId: {
+    type: "string",
+    description: "Check identifier.",
+    minLength: 1,
+    examples: ["chk_ok"],
+  },
+  TicketId: {
+    type: "string",
+    description: "Kitchen ticket identifier.",
+    minLength: 1,
+    examples: ["kds_ok"],
+  },
+  CourierId: {
+    type: "string",
+    description: "Courier identifier.",
+    minLength: 1,
+    examples: ["crr_sam"],
+  },
+  QuoteId: {
+    type: "string",
+    description: "Delivery-quote identifier. Expires in five minutes.",
+    minLength: 1,
+    examples: ["qte_1"],
+  },
+  DeliveryId: {
+    type: "string",
+    description: "Delivery job identifier.",
+    minLength: 1,
+    examples: ["dlv_pending"],
+  },
+  PaymentId: {
+    type: "string",
+    description: "Payment identifier.",
+    minLength: 1,
+    examples: ["pay_paid"],
+  },
+  ChargeId: {
+    type: "string",
+    description: "Processor charge identifier.",
+    minLength: 1,
+    examples: ["ch_paid"],
+  },
+  InvoiceId: {
+    type: "string",
+    description: "Invoice identifier.",
+    minLength: 1,
+    examples: ["inv_paid"],
+  },
+  ReceiptId: {
+    type: "string",
+    description: "Receipt identifier.",
+    minLength: 1,
+    examples: ["rcp_paid"],
+  },
+  RefundId: {
+    type: "string",
+    description: "Refund identifier.",
+    minLength: 1,
+    examples: ["rf_1"],
+  },
+  GiftCardId: {
+    type: "string",
+    description: "Gift-card identifier.",
+    minLength: 1,
+    examples: ["gf_25"],
+  },
+  OfferId: {
+    type: "string",
+    description: "Reward-offer identifier.",
+    minLength: 1,
+    examples: ["off_free_fries"],
+  },
+  RedemptionId: {
+    type: "string",
+    description: "Offer-redemption identifier.",
+    minLength: 1,
+    examples: ["rdm_1"],
+  },
+  SettlementId: {
+    type: "string",
+    description: "Settlement batch identifier.",
+    minLength: 1,
+    examples: ["set_today"],
+  },
+}
+
+const PATH_PARAM_IDS: Record<string, string> = {
+  location_id: "LocationId",
+  table_id: "TableId",
+  menu_id: "MenuId",
+  item_id: "ItemId",
+  group_id: "ModifierGroupId",
+  guest_id: "GuestId",
+  address_id: "AddressId",
+  fulfillment_id: "FulfillmentId",
+  check_id: "CheckId",
+  ticket_id: "TicketId",
+  courier_id: "CourierId",
+  delivery_id: "DeliveryId",
+  payment_id: "PaymentId",
+  invoice_id: "InvoiceId",
+  receipt_id: "ReceiptId",
+  refund_id: "RefundId",
+  gift_card_id: "GiftCardId",
+  offer_id: "OfferId",
+  redemption_id: "RedemptionId",
+  settlement_id: "SettlementId",
+}
+
+function link(
+  operationId: string,
+  parameters: Record<string, string>,
+  description: string
+) {
+  return { operationId, parameters, description }
+}
+
 function listOf(name: string) {
   return {
     type: "object",
@@ -27,6 +215,7 @@ function listOf(name: string) {
 }
 
 export const SCHEMAS: Record<string, Record<string, unknown>> = {
+  ...ID_SCHEMAS,
   Error: {
     type: "object",
     required: ["error"],
@@ -94,7 +283,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Location: {
     type: "object",
     properties: {
-      id: id("loc_oak"),
+      id: idRef("LocationId"),
       name: { type: "string", examples: ["Burgertown Oak Street"] },
       address: {
         type: "object",
@@ -123,19 +312,19 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Table: {
     type: "object",
     properties: {
-      id: id("tbl_4"),
-      location_id: id("loc_oak"),
+      id: idRef("TableId"),
+      location_id: idRef("LocationId"),
       label: { type: "string" },
       seats: { type: "integer" },
       status: { type: "string", enum: ["open", "occupied"] },
-      check_id: { type: ["string", "null"], examples: ["chk_ok"] },
+      check_id: { oneOf: [idRef("CheckId"), { type: "null" }], examples: ["chk_ok"] },
     },
   },
   Zone: {
     type: "object",
     properties: {
-      id: id("zone_oak_core"),
-      location_id: id("loc_oak"),
+      id: idRef("ZoneId"),
+      location_id: idRef("LocationId"),
       name: { type: "string" },
       fee_cents: cents,
       eta_minutes: { type: "integer", examples: [25] },
@@ -155,8 +344,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Menu: {
     type: "object",
     properties: {
-      id: id("menu_dinner"),
-      location_id: id("loc_oak"),
+      id: idRef("MenuId"),
+      location_id: idRef("LocationId"),
       name: { type: "string" },
       categories: {
         type: "array",
@@ -174,7 +363,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   CatalogItem: {
     type: "object",
     properties: {
-      id: id("itm_townie"),
+      id: idRef("ItemId"),
       name: { type: "string" },
       description: { type: "string" },
       category_id: { type: "string" },
@@ -260,7 +449,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Guest: {
     type: "object",
     properties: {
-      id: id("gst_maya"),
+      id: idRef("GuestId"),
       name: { type: "string" },
       email: { type: "string", examples: ["maya@example.com"] },
       phone: { type: "string" },
@@ -280,8 +469,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Address: {
     type: "object",
     properties: {
-      id: id("addr_maya"),
-      guest_id: id("gst_maya"),
+      id: idRef("AddressId"),
+      guest_id: idRef("GuestId"),
       line1: { type: "string" },
       city: { type: "string" },
       region: { type: "string" },
@@ -292,7 +481,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Employee: {
     type: "object",
     properties: {
-      id: id("emp_jon"),
+      id: idRef("EmployeeId"),
       name: { type: "string" },
       role: { type: "string", enum: ["server", "manager"] },
       location_id: id("loc_oak"),
@@ -329,8 +518,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Fulfillment: {
     type: "object",
     properties: {
-      id: id("ful_dine_4"),
-      location_id: id("loc_oak"),
+      id: idRef("FulfillmentId"),
+      location_id: idRef("LocationId"),
       type: { type: "string", enum: ["dine_in", "pickup", "delivery"] },
       status: {
         type: "string",
@@ -349,12 +538,12 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Check: {
     type: "object",
     properties: {
-      id: id("chk_ok"),
-      location_id: id("loc_oak"),
-      table_id: { type: ["string", "null"] },
-      fulfillment_id: id("ful_dine_4"),
-      guest_id: { type: ["string", "null"], examples: ["gst_maya"] },
-      server_id: id("emp_jon"),
+      id: idRef("CheckId"),
+      location_id: idRef("LocationId"),
+      table_id: { oneOf: [idRef("TableId"), { type: "null" }] },
+      fulfillment_id: idRef("FulfillmentId"),
+      guest_id: { oneOf: [idRef("GuestId"), { type: "null" }], examples: ["gst_maya"] },
+      server_id: idRef("EmployeeId"),
       status: { type: "string", enum: ["open", "paid", "voided"] },
       version: {
         type: "integer",
@@ -374,8 +563,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   KitchenTicket: {
     type: "object",
     properties: {
-      id: id("kds_ok"),
-      check_id: id("chk_ok"),
+      id: idRef("TicketId"),
+      check_id: idRef("CheckId"),
       item_ids: { type: "array", items: { type: "string" } },
       status: { type: "string", enum: ["queued", "fired", "done"] },
     },
@@ -383,7 +572,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Courier: {
     type: "object",
     properties: {
-      id: id("crr_sam"),
+      id: idRef("CourierId"),
       name: { type: "string" },
       location_id: id("loc_oak"),
       status: { type: "string", enum: ["available", "offline", "busy"] },
@@ -397,10 +586,10 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Quote: {
     type: "object",
     properties: {
-      id: id("qte_1"),
-      location_id: id("loc_oak"),
-      address_id: id("addr_maya"),
-      zone_id: id("zone_oak_core"),
+      id: idRef("QuoteId"),
+      location_id: idRef("LocationId"),
+      address_id: idRef("AddressId"),
+      zone_id: idRef("ZoneId"),
       fee_cents: cents,
       eta_minutes: { type: "integer" },
       expires_at: {
@@ -413,10 +602,10 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Delivery: {
     type: "object",
     properties: {
-      id: id("dlv_pending"),
-      fulfillment_id: id("ful_dlv_1"),
-      quote_id: { type: "string" },
-      zone_id: id("zone_oak_core"),
+      id: idRef("DeliveryId"),
+      fulfillment_id: idRef("FulfillmentId"),
+      quote_id: idRef("QuoteId"),
+      zone_id: idRef("ZoneId"),
       fee_cents: cents,
       status: {
         type: "string",
@@ -454,8 +643,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Payment: {
     type: "object",
     properties: {
-      id: id("pay_paid"),
-      check_id: id("chk_ok"),
+      id: idRef("PaymentId"),
+      check_id: idRef("CheckId"),
       method: { type: "string", enum: ["card", "gift_card"] },
       amount_cents: cents,
       tip_cents: cents,
@@ -467,8 +656,8 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Charge: {
     type: "object",
     properties: {
-      id: id("ch_paid"),
-      payment_id: id("pay_paid"),
+      id: idRef("ChargeId"),
+      payment_id: idRef("PaymentId"),
       amount_cents: cents,
       status: { type: "string", enum: ["succeeded", "declined", "refunded"] },
       payment_method: {
@@ -481,9 +670,9 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   Invoice: {
     type: "object",
     properties: {
-      id: id("inv_paid"),
-      check_id: { type: "string" },
-      payment_id: { type: "string" },
+      id: idRef("InvoiceId"),
+      check_id: idRef("CheckId"),
+      payment_id: idRef("PaymentId"),
       amount_cents: cents,
       posted_at: { type: "string", format: "date-time" },
     },
@@ -860,11 +1049,11 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["location_id", "type"],
         properties: {
-          location_id: id("loc_oak"),
+          location_id: idRef("LocationId"),
           type: { type: "string", enum: ["dine_in", "pickup", "delivery"] },
-          table_id: { type: "string", description: "Required for dine_in." },
-          guest_id: { type: "string" },
-          address_id: { type: "string", description: "Required for delivery. addr_far is out of zone." },
+          table_id: { ...idRef("TableId"), description: "Required for dine_in." },
+          guest_id: idRef("GuestId"),
+          address_id: { ...idRef("AddressId"), description: "Required for delivery. addr_far is out of zone." },
           pickup_at: { type: "string", format: "date-time" },
         },
       },
@@ -904,17 +1093,16 @@ const OP: Record<string, OpSpec> = {
         required: ["server_id"],
         properties: {
           fulfillment_id: {
-            type: "string",
+            ...idRef("FulfillmentId"),
             description: "Preferred. Open against an existing fulfillment.",
           },
-          location_id: id("loc_oak"),
+          location_id: idRef("LocationId"),
           table_id: {
-            type: "string",
+            ...idRef("TableId"),
             description: "Compat: auto-creates a dine-in fulfillment.",
-            examples: ["tbl_1"],
           },
-          server_id: id("emp_jon"),
-          guest_id: id("gst_maya"),
+          server_id: idRef("EmployeeId"),
+          guest_id: idRef("GuestId"),
         },
       },
       { location_id: "loc_oak", table_id: "tbl_1", server_id: "emp_jon" }
@@ -927,7 +1115,7 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["item_id"],
         properties: {
-          item_id: id("itm_townie"),
+          item_id: idRef("ItemId"),
           quantity: { type: "integer", default: 1 },
           selections: {
             type: "array",
@@ -992,8 +1180,8 @@ const OP: Record<string, OpSpec> = {
       type: "object",
       required: ["fulfillment_id", "quote_id"],
       properties: {
-        fulfillment_id: { type: "string" },
-        quote_id: { type: "string" },
+          fulfillment_id: idRef("FulfillmentId"),
+          quote_id: idRef("QuoteId"),
       },
     }),
     success: { schema: ref("Delivery") },
@@ -1030,7 +1218,7 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["delivery_id"],
         properties: {
-          delivery_id: id("dlv_pending"),
+          delivery_id: idRef("DeliveryId"),
           courier_id: {
             type: "string",
             description: "Optional. crr_sam happy path. crr_dee offline. crr_flake rejects on accept.",
@@ -1046,7 +1234,7 @@ const OP: Record<string, OpSpec> = {
       {
         type: "object",
         required: ["courier_id"],
-        properties: { courier_id: id("crr_sam") },
+        properties: { courier_id: idRef("CourierId") },
       },
       { courier_id: "crr_sam" }
     ),
@@ -1084,7 +1272,7 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["check_id", "amount_cents"],
         properties: {
-          check_id: id("chk_ok"),
+          check_id: idRef("CheckId"),
           method: { type: "string", enum: ["card", "gift_card"], default: "card" },
           amount_cents: {
             ...cents,
@@ -1108,7 +1296,7 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["payment_id", "payment_method"],
         properties: {
-          payment_id: { type: "string" },
+          payment_id: idRef("PaymentId"),
           payment_method: {
             type: "string",
             enum: ["pm_ok", "pm_decline", "pm_timeout"],
@@ -1125,8 +1313,8 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["charge_id"],
         properties: {
-          charge_id: id("ch_paid"),
-          refund_id: { type: "string" },
+          charge_id: idRef("ChargeId"),
+          refund_id: idRef("RefundId"),
         },
       },
       { charge_id: "ch_paid" }
@@ -1138,7 +1326,7 @@ const OP: Record<string, OpSpec> = {
       {
         type: "object",
         required: ["payment_id"],
-        properties: { payment_id: { type: "string" } },
+        properties: { payment_id: idRef("PaymentId") },
       },
       { payment_id: "pay_paid" }
     ),
@@ -1174,7 +1362,7 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["payment_id"],
         properties: {
-          payment_id: id("pay_paid"),
+          payment_id: idRef("PaymentId"),
           amount_cents: cents,
         },
       },
@@ -1203,7 +1391,7 @@ const OP: Record<string, OpSpec> = {
       {
         type: "object",
         required: ["payment_id"],
-        properties: { payment_id: { type: "string" } },
+        properties: { payment_id: idRef("PaymentId") },
       },
       { payment_id: "pay_paid" }
     ),
@@ -1226,9 +1414,9 @@ const OP: Record<string, OpSpec> = {
         type: "object",
         required: ["check_id", "offer_id", "guest_id"],
         properties: {
-          check_id: id("chk_ok"),
-          offer_id: id("off_free_fries"),
-          guest_id: id("gst_maya"),
+          check_id: idRef("CheckId"),
+          offer_id: idRef("OfferId"),
+          guest_id: idRef("GuestId"),
         },
       },
       { check_id: "chk_ok", offer_id: "off_free_fries", guest_id: "gst_maya" }
@@ -1285,8 +1473,299 @@ function pathParams(path: string) {
     name: match[1],
     in: "path",
     required: true,
-    schema: { type: "string" },
+    schema: PATH_PARAM_IDS[match[1]]
+      ? idRef(PATH_PARAM_IDS[match[1]])
+      : { type: "string" },
   }))
+}
+
+const OPERATION_LINKS: Record<string, Record<string, ReturnType<typeof link>>> = {
+  getTable: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/check_id" },
+      "Open check seated at this table."
+    ),
+  },
+  createFulfillment: {
+    GetFulfillment: link(
+      "getFulfillment",
+      { fulfillment_id: "$response.body#/id" },
+      "Fetch the fulfillment just created."
+    ),
+    CreateCheck: link(
+      "createCheck",
+      {},
+      "Open a check against this fulfillment_id."
+    ),
+  },
+  getFulfillment: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/check_id" },
+      "Check hanging off this fulfillment."
+    ),
+    CancelFulfillment: link(
+      "cancelFulfillment",
+      { fulfillment_id: "$response.body#/id" },
+      "Cancel when unpaid food will not be collected."
+    ),
+    HandoffFulfillment: link(
+      "handoffFulfillment",
+      { fulfillment_id: "$response.body#/id" },
+      "Pickup handoff with the printed code."
+    ),
+  },
+  createCheck: {
+    GetCheck: link("getCheck", { check_id: "$response.body#/id" }, "Re-fetch the open check."),
+    AddItem: link("addItem", { check_id: "$response.body#/id" }, "Add a line with selections[]."),
+    SendOrder: link("sendOrder", { check_id: "$response.body#/id" }, "Send unsent lines to the kitchen."),
+    ApplyDiscount: link(
+      "applyDiscount",
+      { check_id: "$response.body#/id" },
+      "Apply LOCAL10 or another code."
+    ),
+    CreatePayment: link("createPayment", {}, "Tender after reading totals.due_cents."),
+  },
+  getCheck: {
+    AddItem: link("addItem", { check_id: "$response.body#/id" }, "Add another line."),
+    SendOrder: link("sendOrder", { check_id: "$response.body#/id" }, "Send unsent lines."),
+    ApplyDiscount: link(
+      "applyDiscount",
+      { check_id: "$response.body#/id" },
+      "Apply a discount code; due changes."
+    ),
+    CreatePayment: link("createPayment", {}, "Pay with amount_cents equal to totals.due_cents."),
+    GetReceiptByCheck: link(
+      "getReceiptByCheck",
+      { check_id: "$response.body#/id" },
+      "Receipt after invoice."
+    ),
+    VoidCheck: link("voidCheck", { check_id: "$response.body#/id" }, "Void after a reversed refund."),
+  },
+  addItem: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/check/id" },
+      "Check with the new line and bumped version."
+    ),
+    SendOrder: link(
+      "sendOrder",
+      { check_id: "$response.body#/check/id" },
+      "Send after all lines are on the check."
+    ),
+    AddAnotherItem: link(
+      "addItem",
+      { check_id: "$response.body#/check/id" },
+      "Add another line to the same check."
+    ),
+  },
+  sendOrder: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/check/id" },
+      "Check after inventory decrement."
+    ),
+    CompleteTicket: link(
+      "completeTicket",
+      { ticket_id: "$response.body#/ticket/id" },
+      "Bump the new KDS ticket fired or done."
+    ),
+    ListTickets: link("listTickets", {}, "Kitchen board including this ticket."),
+  },
+  applyDiscount: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/id" },
+      "Re-read due_cents after the code."
+    ),
+    CreatePayment: link("createPayment", {}, "Pay the discounted due."),
+  },
+  createPayment: {
+    GetPayment: link(
+      "getPayment",
+      { payment_id: "$response.body#/id" },
+      "Pending payment waiting on the processor."
+    ),
+    CreateCharge: link("createCharge", {}, "Capture with pm_ok, or branch on decline/timeout."),
+    RedeemGiftCard: link("redeemGiftCard", {}, "Capture without a processor charge."),
+  },
+  createCharge: {
+    CreateInvoice: link("createInvoice", {}, "Post the invoice after capture."),
+    GetPayment: link(
+      "getPayment",
+      { payment_id: "$response.body#/payment_id" },
+      "Payment now captured."
+    ),
+    CreateProcessorRefund: link(
+      "createProcessorRefund",
+      { charge_id: "$response.body#/id" },
+      "Reverse this charge after Burgertown accepts a refund."
+    ),
+  },
+  createInvoice: {
+    GetInvoice: link(
+      "getInvoice",
+      { invoice_id: "$response.body#/id" },
+      "Posted invoice."
+    ),
+    GetReceiptByCheck: link(
+      "getReceiptByCheck",
+      { check_id: "$response.body#/check_id" },
+      "Itemized receipt."
+    ),
+    AddTip: link(
+      "addTip",
+      { payment_id: "$response.body#/payment_id" },
+      "Optional tip on subtotal, once."
+    ),
+    EarnRewards: link("earnRewards", {}, "Write points after payment."),
+  },
+  getReceiptByCheck: {
+    AddTip: link(
+      "addTip",
+      { payment_id: "$response.body#/payment_id" },
+      "Tip after the receipt exists."
+    ),
+  },
+  createRefund: {
+    GetRefund: link(
+      "getRefund",
+      { refund_id: "$response.body#/id" },
+      "Accepted Burgertown refund."
+    ),
+    CreateProcessorRefund: link(
+      "createProcessorRefund",
+      {},
+      "Reverse the processor charge next."
+    ),
+  },
+  createProcessorRefund: {
+    GetRefund: link(
+      "getRefund",
+      { refund_id: "$response.body#/refund_id" },
+      "Burgertown refund now reversed. Then POST /v1/checks/{check_id}/void."
+    ),
+  },
+  quoteDelivery: {
+    CreateDelivery: link("createDelivery", {}, "Commit the quote to a fulfillment."),
+    CheckZone: link("checkZone", {}, "Zone check is side-effect free."),
+  },
+  checkZone: {
+    QuoteDelivery: link("quoteDelivery", {}, "Quote fee and ETA when in_zone is true."),
+  },
+  createDelivery: {
+    GetDelivery: link(
+      "getDelivery",
+      { delivery_id: "$response.body#/id" },
+      "Pending delivery job."
+    ),
+    DispatchDelivery: link("dispatchDelivery", {}, "Assign a courier."),
+  },
+  dispatchDelivery: {
+    AcceptDispatch: link(
+      "acceptDispatch",
+      { delivery_id: "$response.body#/id" },
+      "Courier accepts. crr_flake → 409 courier_rejected."
+    ),
+    RejectDispatch: link(
+      "rejectDispatch",
+      { delivery_id: "$response.body#/id" },
+      "Return the job to pending."
+    ),
+    GetCourier: link(
+      "getCourier",
+      { courier_id: "$response.body#/courier_id" },
+      "Assigned courier."
+    ),
+  },
+  acceptDispatch: {
+    PickupDelivery: link(
+      "pickupDelivery",
+      { delivery_id: "$response.body#/id" },
+      "Pickup after the fulfillment is ready."
+    ),
+  },
+  pickupDelivery: {
+    PingTracking: link(
+      "pingTracking",
+      { delivery_id: "$response.body#/id" },
+      "Append a GeoJSON point (lng, lat)."
+    ),
+    DeliverDelivery: link(
+      "deliverDelivery",
+      { delivery_id: "$response.body#/id" },
+      "Complete drop-off. Edge zone needs proof_photo_url."
+    ),
+    FailDelivery: link(
+      "failDelivery",
+      { delivery_id: "$response.body#/id" },
+      "Mark failed and recover the check."
+    ),
+  },
+  deliverDelivery: {
+    CreateInvoice: link("createInvoice", {}, "Invoice is allowed after delivered."),
+    AddCourierTip: link("addCourierTip", {}, "Courier tip, once, separate from server tip."),
+  },
+  failDelivery: {
+    GetFulfillment: link(
+      "getFulfillment",
+      { fulfillment_id: "$response.body#/fulfillment_id" },
+      "Fulfillment stays ready; it does not close."
+    ),
+    CancelFulfillment: link(
+      "cancelFulfillment",
+      { fulfillment_id: "$response.body#/fulfillment_id" },
+      "Unpaid path: cancel. Inventory is not restocked."
+    ),
+    CreateRefund: link("createRefund", {}, "Paid path: refund then processor reverse then void."),
+  },
+  createRedemption: {
+    GetCheck: link(
+      "getCheck",
+      { check_id: "$response.body#/check/id" },
+      "Re-fetch. due_cents and version changed."
+    ),
+    GetRedemption: link(
+      "getRedemption",
+      { redemption_id: "$response.body#/redemption/id" },
+      "The applied offer."
+    ),
+    CreatePayment: link(
+      "createPayment",
+      {},
+      "Pay the new due. Stale amount_cents → 422 amount_mismatch."
+    ),
+  },
+  earnRewards: {
+    GetLedger: link(
+      "getLedger",
+      { guest_id: "$response.body#/guest_id" },
+      "Append-only ledger including this earn."
+    ),
+    GetRewards: link(
+      "getRewards",
+      { guest_id: "$response.body#/guest_id" },
+      "Updated points and tier."
+    ),
+  },
+  listOffers: {
+    GetOffer: link("getOffer", { offer_id: "$response.body#/data/0/id" }, "First eligible offer."),
+    CreateRedemption: link("createRedemption", {}, "Redeem against an open check."),
+  },
+  getGuest: {
+    ListGuestAddresses: link(
+      "listGuestAddresses",
+      { guest_id: "$response.body#/id" },
+      "Saved addresses."
+    ),
+    GetRewards: link(
+      "getRewards",
+      { guest_id: "$response.body#/id" },
+      "Townie points and tier."
+    ),
+    ListItems: link("listItems", {}, "Filter catalog with exclude_allergens from dietary_profile."),
+  },
 }
 
 function failureResponses(op: Operation) {
@@ -1340,6 +1819,7 @@ function buildOperation(api: (typeof API_CATALOG)[number], op: Operation) {
       [String(op.successStatus)]: {
         description: "Success",
         content: jsonContent(successSchema, extra.success?.example),
+        ...(OPERATION_LINKS[op.id] ? { links: OPERATION_LINKS[op.id] } : {}),
       },
       ...failureResponses(op),
     },
@@ -1484,6 +1964,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
         "The only retryable error is 503 no_courier_available (x-retryable on that response).",
         "Processor payment_method: pm_ok | pm_decline (402) | pm_timeout (504).",
         "Reset fixtures with POST /v1/sandbox { \"reset\": true } before scripted flows.",
+        "Workflow recipes: GET /arazzo.yaml (Arazzo 1.0.1).",
         "",
         "Seeded happy-path ids: loc_oak, tbl_4 / chk_ok (due 1736), gst_maya (1240 gold), emp_jon, itm_townie, pm_ok, off_free_fries, dlv_pending, crr_sam.",
       ].join("\n"),
@@ -1511,6 +1992,9 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
     paths,
     components: {
       schemas: SCHEMAS,
+      links: Object.fromEntries(
+        Object.values(OPERATION_LINKS).flatMap((group) => Object.entries(group))
+      ),
       securitySchemes: {
         SandboxKey: {
           type: "apiKey",

@@ -6,7 +6,7 @@ Thirty-five HTTP APIs sit behind that: floor, menu, fulfillment, kitchen, delive
 
 Agent handoff: [`HANDOFF.md`](HANDOFF.md).
 
-The live API graph is at `/apis`. A frozen snapshot of an earlier sandbox is in [`saved/visualization/`](saved/visualization/).
+The live API graph is at `/apis`. How the operations connect is published as Arazzo 1.0.1 in [`arazzo.yaml`](arazzo.yaml). A frozen snapshot of an earlier sandbox is in [`saved/visualization/`](saved/visualization/).
 
 ## Run
 
@@ -25,6 +25,7 @@ npm run dev
 | Townie Rewards | `/rewards` |
 | APIs (graph + list) | `/apis` |
 | OpenAPI | `/openapi.json` |
+| Arazzo 1.0.1 | `/arazzo.yaml` |
 | Health | `/health` |
 | API index | `/v1/meta/apis` |
 
@@ -36,7 +37,9 @@ Order pickup, pay by card, earn punches. Sign in as Maya Chen (`maya@example.com
 
 ## Specs
 
-35 tagged APIs. Import into Atlas from **`GET /openapi.json`** (OpenAPI 3.1) or the `openapi.json` file in this repo. Each operation has request/response schemas, seeded examples, `x-depends-on`, and `x-error-codes`. `503 no_courier_available` is marked `x-retryable`.
+35 tagged APIs. Import into Atlas from **`GET /openapi.json`** (OpenAPI 3.1) or the `openapi.json` file in this repo. Each operation has request/response schemas, seeded examples, named ID schemas (`CheckId`, …), OpenAPI links, `x-depends-on`, and `x-error-codes`. `503 no_courier_available` is marked `x-retryable`.
+
+Workflows A–I are in **`GET /arazzo.yaml`** (Arazzo 1.0.1). Validate with `npm run validate:arazzo`.
 
 `GET /v1/loyalty/...` 308s to `/v1/rewards/...`.
 
