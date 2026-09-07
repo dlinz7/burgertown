@@ -3,7 +3,7 @@
   "info": {
     "title": "Burgertown",
     "version": "1.1.0",
-    "description": "HTTP APIs for Burgertown on Oak Street, a fictional smash-burger restaurant.\nImport this document into Atlas (or any workflow generator). Burgertown is the dummy merchant; Atlas owns blast radius and workflow generation.\n\nMoney is integer cents. Tax is 8.5% of (subtotal − discount − reward_discount). Delivery fee is not taxed.\nPOST /v1/payments requires amount_cents equal to check.totals.due_cents. Redeeming an offer changes due — re-fetch the check or you get 422 amount_mismatch.\nThe only retryable error is 503 no_courier_available (x-retryable on that response).\nProcessor payment_method: pm_ok | pm_decline (402) | pm_timeout (504).\nReset fixtures with POST /v1/sandbox { \"reset\": true } before scripted flows.\n\nSeeded happy-path ids: loc_oak, tbl_4 / chk_ok (due 1736), gst_maya (1240 gold), emp_jon, itm_townie, pm_ok, off_free_fries, dlv_pending, crr_sam.",
+    "description": "HTTP APIs for Burgertown on Oak Street, a fictional smash-burger restaurant.\nImport this document into Atlas (or any workflow generator). Burgertown is the dummy merchant; Atlas owns blast radius and workflow generation.\n\nMoney is integer cents. Tax is 8.5% of (subtotal − discount − reward_discount). Delivery fee is not taxed.\nPOST /v1/payments requires amount_cents equal to check.totals.due_cents. Redeeming an offer changes due — re-fetch the check or you get 422 amount_mismatch.\nThe only retryable error is 503 no_courier_available (x-retryable on that response).\nProcessor payment_method: pm_ok | pm_decline (402) | pm_timeout (504).\nReset fixtures with POST /v1/sandbox { \"reset\": true } before scripted flows.\nWorkflow recipes: GET /arazzo.yaml (Arazzo 1.0.1).\n\nSeeded happy-path ids: loc_oak, tbl_4 / chk_ok (due 1736), gst_maya (1240 gold), emp_jon, itm_townie, pm_ok, off_free_fries, dlv_pending, crr_sam.",
     "contact": {
       "name": "Burgertown",
       "email": "hello@burgertown.dev"
@@ -438,7 +438,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocationId"
             }
           }
         ],
@@ -496,7 +496,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocationId"
             }
           }
         ],
@@ -568,7 +568,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/TableId"
             }
           }
         ],
@@ -585,6 +585,15 @@
                   "check_id": "chk_ok",
                   "status": "occupied"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check_id"
+                },
+                "description": "Open check seated at this table."
               }
             }
           },
@@ -634,7 +643,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocationId"
             }
           }
         ],
@@ -708,6 +717,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/ZoneCheck"
                 }
+              }
+            },
+            "links": {
+              "QuoteDelivery": {
+                "operationId": "quoteDelivery",
+                "parameters": {},
+                "description": "Quote fee and ETA when in_zone is true."
               }
             }
           },
@@ -837,7 +853,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/MenuId"
             }
           }
         ],
@@ -946,7 +962,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ItemId"
             }
           }
         ],
@@ -1004,7 +1020,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ItemId"
             }
           }
         ],
@@ -1138,7 +1154,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ModifierGroupId"
             }
           }
         ],
@@ -1275,7 +1291,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ItemId"
             }
           }
         ],
@@ -1423,7 +1439,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -1435,6 +1451,20 @@
                 "schema": {
                   "$ref": "#/components/schemas/Check"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Re-read due_cents after the code."
+              },
+              "CreatePayment": {
+                "operationId": "createPayment",
+                "parameters": {},
+                "description": "Pay the discounted due."
               }
             }
           },
@@ -1570,7 +1600,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ItemId"
             }
           }
         ],
@@ -1790,7 +1820,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -1802,6 +1832,27 @@
                 "schema": {
                   "$ref": "#/components/schemas/Guest"
                 }
+              }
+            },
+            "links": {
+              "ListGuestAddresses": {
+                "operationId": "listGuestAddresses",
+                "parameters": {
+                  "guest_id": "$response.body#/id"
+                },
+                "description": "Saved addresses."
+              },
+              "GetRewards": {
+                "operationId": "getRewards",
+                "parameters": {
+                  "guest_id": "$response.body#/id"
+                },
+                "description": "Townie points and tier."
+              },
+              "ListItems": {
+                "operationId": "listItems",
+                "parameters": {},
+                "description": "Filter catalog with exclude_allergens from dietary_profile."
               }
             }
           },
@@ -1850,7 +1901,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -1919,7 +1970,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -2009,7 +2060,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/AddressId"
             }
           }
         ],
@@ -2112,6 +2163,20 @@
                   "$ref": "#/components/schemas/Fulfillment"
                 }
               }
+            },
+            "links": {
+              "GetFulfillment": {
+                "operationId": "getFulfillment",
+                "parameters": {
+                  "fulfillment_id": "$response.body#/id"
+                },
+                "description": "Fetch the fulfillment just created."
+              },
+              "CreateCheck": {
+                "operationId": "createCheck",
+                "parameters": {},
+                "description": "Open a check against this fulfillment_id."
+              }
             }
           },
           "409": {
@@ -2186,10 +2251,7 @@
                 ],
                 "properties": {
                   "location_id": {
-                    "type": "string",
-                    "examples": [
-                      "loc_oak"
-                    ]
+                    "$ref": "#/components/schemas/LocationId"
                   },
                   "type": {
                     "type": "string",
@@ -2200,14 +2262,14 @@
                     ]
                   },
                   "table_id": {
-                    "type": "string",
+                    "$ref": "#/components/schemas/TableId",
                     "description": "Required for dine_in."
                   },
                   "guest_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/GuestId"
                   },
                   "address_id": {
-                    "type": "string",
+                    "$ref": "#/components/schemas/AddressId",
                     "description": "Required for delivery. addr_far is out of zone."
                   },
                   "pickup_at": {
@@ -2297,7 +2359,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/FulfillmentId"
             }
           }
         ],
@@ -2309,6 +2371,29 @@
                 "schema": {
                   "$ref": "#/components/schemas/Fulfillment"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check_id"
+                },
+                "description": "Check hanging off this fulfillment."
+              },
+              "CancelFulfillment": {
+                "operationId": "cancelFulfillment",
+                "parameters": {
+                  "fulfillment_id": "$response.body#/id"
+                },
+                "description": "Cancel when unpaid food will not be collected."
+              },
+              "HandoffFulfillment": {
+                "operationId": "handoffFulfillment",
+                "parameters": {
+                  "fulfillment_id": "$response.body#/id"
+                },
+                "description": "Pickup handoff with the printed code."
               }
             }
           },
@@ -2359,7 +2444,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/FulfillmentId"
             }
           }
         ],
@@ -2469,7 +2554,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/FulfillmentId"
             }
           }
         ],
@@ -2584,6 +2669,41 @@
                   "$ref": "#/components/schemas/Check"
                 }
               }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Re-fetch the open check."
+              },
+              "AddItem": {
+                "operationId": "addItem",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Add a line with selections[]."
+              },
+              "SendOrder": {
+                "operationId": "sendOrder",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Send unsent lines to the kitchen."
+              },
+              "ApplyDiscount": {
+                "operationId": "applyDiscount",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Apply LOCAL10 or another code."
+              },
+              "CreatePayment": {
+                "operationId": "createPayment",
+                "parameters": {},
+                "description": "Tender after reading totals.due_cents."
+              }
             }
           },
           "404": {
@@ -2652,33 +2772,21 @@
                 ],
                 "properties": {
                   "fulfillment_id": {
-                    "type": "string",
+                    "$ref": "#/components/schemas/FulfillmentId",
                     "description": "Preferred. Open against an existing fulfillment."
                   },
                   "location_id": {
-                    "type": "string",
-                    "examples": [
-                      "loc_oak"
-                    ]
+                    "$ref": "#/components/schemas/LocationId"
                   },
                   "table_id": {
-                    "type": "string",
-                    "description": "Compat: auto-creates a dine-in fulfillment.",
-                    "examples": [
-                      "tbl_1"
-                    ]
+                    "$ref": "#/components/schemas/TableId",
+                    "description": "Compat: auto-creates a dine-in fulfillment."
                   },
                   "server_id": {
-                    "type": "string",
-                    "examples": [
-                      "emp_jon"
-                    ]
+                    "$ref": "#/components/schemas/EmployeeId"
                   },
                   "guest_id": {
-                    "type": "string",
-                    "examples": [
-                      "gst_maya"
-                    ]
+                    "$ref": "#/components/schemas/GuestId"
                   }
                 }
               },
@@ -2706,7 +2814,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -2718,6 +2826,48 @@
                 "schema": {
                   "$ref": "#/components/schemas/Check"
                 }
+              }
+            },
+            "links": {
+              "AddItem": {
+                "operationId": "addItem",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Add another line."
+              },
+              "SendOrder": {
+                "operationId": "sendOrder",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Send unsent lines."
+              },
+              "ApplyDiscount": {
+                "operationId": "applyDiscount",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Apply a discount code; due changes."
+              },
+              "CreatePayment": {
+                "operationId": "createPayment",
+                "parameters": {},
+                "description": "Pay with amount_cents equal to totals.due_cents."
+              },
+              "GetReceiptByCheck": {
+                "operationId": "getReceiptByCheck",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Receipt after invoice."
+              },
+              "VoidCheck": {
+                "operationId": "voidCheck",
+                "parameters": {
+                  "check_id": "$response.body#/id"
+                },
+                "description": "Void after a reversed refund."
               }
             }
           },
@@ -2768,7 +2918,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -2780,6 +2930,29 @@
                 "schema": {
                   "$ref": "#/components/schemas/LineAndCheck"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check/id"
+                },
+                "description": "Check with the new line and bumped version."
+              },
+              "SendOrder": {
+                "operationId": "sendOrder",
+                "parameters": {
+                  "check_id": "$response.body#/check/id"
+                },
+                "description": "Send after all lines are on the check."
+              },
+              "AddAnotherItem": {
+                "operationId": "addItem",
+                "parameters": {
+                  "check_id": "$response.body#/check/id"
+                },
+                "description": "Add another line to the same check."
               }
             }
           },
@@ -2910,10 +3083,7 @@
                 ],
                 "properties": {
                   "item_id": {
-                    "type": "string",
-                    "examples": [
-                      "itm_townie"
-                    ]
+                    "$ref": "#/components/schemas/ItemId"
                   },
                   "quantity": {
                     "type": "integer",
@@ -2970,7 +3140,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -2982,6 +3152,27 @@
                 "schema": {
                   "$ref": "#/components/schemas/SendResult"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check/id"
+                },
+                "description": "Check after inventory decrement."
+              },
+              "CompleteTicket": {
+                "operationId": "completeTicket",
+                "parameters": {
+                  "ticket_id": "$response.body#/ticket/id"
+                },
+                "description": "Bump the new KDS ticket fired or done."
+              },
+              "ListTickets": {
+                "operationId": "listTickets",
+                "parameters": {},
+                "description": "Kitchen board including this ticket."
               }
             }
           },
@@ -3097,7 +3288,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/TicketId"
             }
           }
         ],
@@ -3240,7 +3431,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CourierId"
             }
           }
         ],
@@ -3303,6 +3494,18 @@
                 "schema": {
                   "$ref": "#/components/schemas/Quote"
                 }
+              }
+            },
+            "links": {
+              "CreateDelivery": {
+                "operationId": "createDelivery",
+                "parameters": {},
+                "description": "Commit the quote to a fulfillment."
+              },
+              "CheckZone": {
+                "operationId": "checkZone",
+                "parameters": {},
+                "description": "Zone check is side-effect free."
               }
             }
           },
@@ -3413,6 +3616,20 @@
                   "$ref": "#/components/schemas/Delivery"
                 }
               }
+            },
+            "links": {
+              "GetDelivery": {
+                "operationId": "getDelivery",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Pending delivery job."
+              },
+              "DispatchDelivery": {
+                "operationId": "dispatchDelivery",
+                "parameters": {},
+                "description": "Assign a courier."
+              }
             }
           },
           "404": {
@@ -3482,10 +3699,10 @@
                 ],
                 "properties": {
                   "fulfillment_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/FulfillmentId"
                   },
                   "quote_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/QuoteId"
                   }
                 }
               }
@@ -3508,7 +3725,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -3570,7 +3787,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -3582,6 +3799,29 @@
                 "schema": {
                   "$ref": "#/components/schemas/Delivery"
                 }
+              }
+            },
+            "links": {
+              "PingTracking": {
+                "operationId": "pingTracking",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Append a GeoJSON point (lng, lat)."
+              },
+              "DeliverDelivery": {
+                "operationId": "deliverDelivery",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Complete drop-off. Edge zone needs proof_photo_url."
+              },
+              "FailDelivery": {
+                "operationId": "failDelivery",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Mark failed and recover the check."
               }
             }
           },
@@ -3656,7 +3896,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -3668,6 +3908,18 @@
                 "schema": {
                   "$ref": "#/components/schemas/Delivery"
                 }
+              }
+            },
+            "links": {
+              "CreateInvoice": {
+                "operationId": "createInvoice",
+                "parameters": {},
+                "description": "Invoice is allowed after delivered."
+              },
+              "AddCourierTip": {
+                "operationId": "addCourierTip",
+                "parameters": {},
+                "description": "Courier tip, once, separate from server tip."
               }
             }
           },
@@ -3761,7 +4013,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -3773,6 +4025,27 @@
                 "schema": {
                   "$ref": "#/components/schemas/Delivery"
                 }
+              }
+            },
+            "links": {
+              "GetFulfillment": {
+                "operationId": "getFulfillment",
+                "parameters": {
+                  "fulfillment_id": "$response.body#/fulfillment_id"
+                },
+                "description": "Fulfillment stays ready; it does not close."
+              },
+              "CancelFulfillment": {
+                "operationId": "cancelFulfillment",
+                "parameters": {
+                  "fulfillment_id": "$response.body#/fulfillment_id"
+                },
+                "description": "Unpaid path: cancel. Inventory is not restocked."
+              },
+              "CreateRefund": {
+                "operationId": "createRefund",
+                "parameters": {},
+                "description": "Paid path: refund then processor reverse then void."
               }
             }
           },
@@ -3841,7 +4114,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -3906,6 +4179,29 @@
                 "schema": {
                   "$ref": "#/components/schemas/Delivery"
                 }
+              }
+            },
+            "links": {
+              "AcceptDispatch": {
+                "operationId": "acceptDispatch",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Courier accepts. crr_flake → 409 courier_rejected."
+              },
+              "RejectDispatch": {
+                "operationId": "rejectDispatch",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Return the job to pending."
+              },
+              "GetCourier": {
+                "operationId": "getCourier",
+                "parameters": {
+                  "courier_id": "$response.body#/courier_id"
+                },
+                "description": "Assigned courier."
               }
             }
           },
@@ -4001,10 +4297,7 @@
                 ],
                 "properties": {
                   "delivery_id": {
-                    "type": "string",
-                    "examples": [
-                      "dlv_pending"
-                    ]
+                    "$ref": "#/components/schemas/DeliveryId"
                   },
                   "courier_id": {
                     "type": "string",
@@ -4034,7 +4327,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -4046,6 +4339,15 @@
                 "schema": {
                   "$ref": "#/components/schemas/Delivery"
                 }
+              }
+            },
+            "links": {
+              "PickupDelivery": {
+                "operationId": "pickupDelivery",
+                "parameters": {
+                  "delivery_id": "$response.body#/id"
+                },
+                "description": "Pickup after the fulfillment is ready."
               }
             }
           },
@@ -4114,10 +4416,7 @@
                 ],
                 "properties": {
                   "courier_id": {
-                    "type": "string",
-                    "examples": [
-                      "crr_sam"
-                    ]
+                    "$ref": "#/components/schemas/CourierId"
                   }
                 }
               },
@@ -4143,7 +4442,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -4225,7 +4524,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -4312,7 +4611,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/DeliveryId"
             }
           }
         ],
@@ -4375,6 +4674,25 @@
                 "schema": {
                   "$ref": "#/components/schemas/Payment"
                 }
+              }
+            },
+            "links": {
+              "GetPayment": {
+                "operationId": "getPayment",
+                "parameters": {
+                  "payment_id": "$response.body#/id"
+                },
+                "description": "Pending payment waiting on the processor."
+              },
+              "CreateCharge": {
+                "operationId": "createCharge",
+                "parameters": {},
+                "description": "Capture with pm_ok, or branch on decline/timeout."
+              },
+              "RedeemGiftCard": {
+                "operationId": "redeemGiftCard",
+                "parameters": {},
+                "description": "Capture without a processor charge."
               }
             }
           },
@@ -4475,10 +4793,7 @@
                 ],
                 "properties": {
                   "check_id": {
-                    "type": "string",
-                    "examples": [
-                      "chk_ok"
-                    ]
+                    "$ref": "#/components/schemas/CheckId"
                   },
                   "method": {
                     "type": "string",
@@ -4528,7 +4843,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/PaymentId"
             }
           }
         ],
@@ -4594,6 +4909,27 @@
                 "schema": {
                   "$ref": "#/components/schemas/Charge"
                 }
+              }
+            },
+            "links": {
+              "CreateInvoice": {
+                "operationId": "createInvoice",
+                "parameters": {},
+                "description": "Post the invoice after capture."
+              },
+              "GetPayment": {
+                "operationId": "getPayment",
+                "parameters": {
+                  "payment_id": "$response.body#/payment_id"
+                },
+                "description": "Payment now captured."
+              },
+              "CreateProcessorRefund": {
+                "operationId": "createProcessorRefund",
+                "parameters": {
+                  "charge_id": "$response.body#/id"
+                },
+                "description": "Reverse this charge after Burgertown accepts a refund."
               }
             }
           },
@@ -4686,7 +5022,7 @@
                 ],
                 "properties": {
                   "payment_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/PaymentId"
                   },
                   "payment_method": {
                     "type": "string",
@@ -4724,6 +5060,15 @@
                 "schema": {
                   "$ref": "#/components/schemas/ProcessorRefund"
                 }
+              }
+            },
+            "links": {
+              "GetRefund": {
+                "operationId": "getRefund",
+                "parameters": {
+                  "refund_id": "$response.body#/refund_id"
+                },
+                "description": "Burgertown refund now reversed. Then POST /v1/checks/{check_id}/void."
               }
             }
           },
@@ -4791,13 +5136,10 @@
                 ],
                 "properties": {
                   "charge_id": {
-                    "type": "string",
-                    "examples": [
-                      "ch_paid"
-                    ]
+                    "$ref": "#/components/schemas/ChargeId"
                   },
                   "refund_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/RefundId"
                   }
                 }
               },
@@ -4826,6 +5168,34 @@
                 "schema": {
                   "$ref": "#/components/schemas/Invoice"
                 }
+              }
+            },
+            "links": {
+              "GetInvoice": {
+                "operationId": "getInvoice",
+                "parameters": {
+                  "invoice_id": "$response.body#/id"
+                },
+                "description": "Posted invoice."
+              },
+              "GetReceiptByCheck": {
+                "operationId": "getReceiptByCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check_id"
+                },
+                "description": "Itemized receipt."
+              },
+              "AddTip": {
+                "operationId": "addTip",
+                "parameters": {
+                  "payment_id": "$response.body#/payment_id"
+                },
+                "description": "Optional tip on subtotal, once."
+              },
+              "EarnRewards": {
+                "operationId": "earnRewards",
+                "parameters": {},
+                "description": "Write points after payment."
               }
             }
           },
@@ -4900,7 +5270,7 @@
                 ],
                 "properties": {
                   "payment_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/PaymentId"
                   }
                 }
               },
@@ -4926,7 +5296,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/InvoiceId"
             }
           }
         ],
@@ -4988,7 +5358,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ReceiptId"
             }
           }
         ],
@@ -5049,7 +5419,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -5061,6 +5431,15 @@
                 "schema": {
                   "$ref": "#/components/schemas/Receipt"
                 }
+              }
+            },
+            "links": {
+              "AddTip": {
+                "operationId": "addTip",
+                "parameters": {
+                  "payment_id": "$response.body#/payment_id"
+                },
+                "description": "Tip after the receipt exists."
               }
             }
           },
@@ -5110,7 +5489,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/PaymentId"
             }
           }
         ],
@@ -5335,6 +5714,20 @@
                   "$ref": "#/components/schemas/Refund"
                 }
               }
+            },
+            "links": {
+              "GetRefund": {
+                "operationId": "getRefund",
+                "parameters": {
+                  "refund_id": "$response.body#/id"
+                },
+                "description": "Accepted Burgertown refund."
+              },
+              "CreateProcessorRefund": {
+                "operationId": "createProcessorRefund",
+                "parameters": {},
+                "description": "Reverse the processor charge next."
+              }
             }
           },
           "404": {
@@ -5402,10 +5795,7 @@
                 ],
                 "properties": {
                   "payment_id": {
-                    "type": "string",
-                    "examples": [
-                      "pay_paid"
-                    ]
+                    "$ref": "#/components/schemas/PaymentId"
                   },
                   "amount_cents": {
                     "type": "integer",
@@ -5438,7 +5828,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/RefundId"
             }
           }
         ],
@@ -5499,7 +5889,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CheckId"
             }
           }
         ],
@@ -5584,7 +5974,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GiftCardId"
             }
           }
         ],
@@ -5644,7 +6034,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GiftCardId"
             }
           }
         ],
@@ -5754,7 +6144,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -5815,7 +6205,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -5887,7 +6277,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -5899,6 +6289,22 @@
                 "schema": {
                   "$ref": "#/components/schemas/RewardAccount"
                 }
+              }
+            },
+            "links": {
+              "GetLedger": {
+                "operationId": "getLedger",
+                "parameters": {
+                  "guest_id": "$response.body#/guest_id"
+                },
+                "description": "Append-only ledger including this earn."
+              },
+              "GetRewards": {
+                "operationId": "getRewards",
+                "parameters": {
+                  "guest_id": "$response.body#/guest_id"
+                },
+                "description": "Updated points and tier."
               }
             }
           },
@@ -5943,7 +6349,7 @@
                 ],
                 "properties": {
                   "payment_id": {
-                    "type": "string"
+                    "$ref": "#/components/schemas/PaymentId"
                   }
                 }
               },
@@ -5995,6 +6401,20 @@
                   }
                 }
               }
+            },
+            "links": {
+              "GetOffer": {
+                "operationId": "getOffer",
+                "parameters": {
+                  "offer_id": "$response.body#/data/0/id"
+                },
+                "description": "First eligible offer."
+              },
+              "CreateRedemption": {
+                "operationId": "createRedemption",
+                "parameters": {},
+                "description": "Redeem against an open check."
+              }
             }
           }
         },
@@ -6019,7 +6439,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/OfferId"
             }
           }
         ],
@@ -6083,6 +6503,27 @@
                 "schema": {
                   "$ref": "#/components/schemas/RedemptionResult"
                 }
+              }
+            },
+            "links": {
+              "GetCheck": {
+                "operationId": "getCheck",
+                "parameters": {
+                  "check_id": "$response.body#/check/id"
+                },
+                "description": "Re-fetch. due_cents and version changed."
+              },
+              "GetRedemption": {
+                "operationId": "getRedemption",
+                "parameters": {
+                  "redemption_id": "$response.body#/redemption/id"
+                },
+                "description": "The applied offer."
+              },
+              "CreatePayment": {
+                "operationId": "createPayment",
+                "parameters": {},
+                "description": "Pay the new due. Stale amount_cents → 422 amount_mismatch."
               }
             }
           },
@@ -6182,22 +6623,13 @@
                 ],
                 "properties": {
                   "check_id": {
-                    "type": "string",
-                    "examples": [
-                      "chk_ok"
-                    ]
+                    "$ref": "#/components/schemas/CheckId"
                   },
                   "offer_id": {
-                    "type": "string",
-                    "examples": [
-                      "off_free_fries"
-                    ]
+                    "$ref": "#/components/schemas/OfferId"
                   },
                   "guest_id": {
-                    "type": "string",
-                    "examples": [
-                      "gst_maya"
-                    ]
+                    "$ref": "#/components/schemas/GuestId"
                   }
                 }
               },
@@ -6225,7 +6657,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/RedemptionId"
             }
           }
         ],
@@ -6284,7 +6716,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/RedemptionId"
             }
           }
         ],
@@ -6513,7 +6945,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/SettlementId"
             }
           }
         ],
@@ -6719,7 +7151,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -6752,7 +7184,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/GuestId"
             }
           }
         ],
@@ -6808,6 +7240,206 @@
   },
   "components": {
     "schemas": {
+      "LocationId": {
+        "type": "string",
+        "description": "Restaurant location identifier.",
+        "minLength": 1,
+        "examples": [
+          "loc_oak"
+        ]
+      },
+      "TableId": {
+        "type": "string",
+        "description": "Picnic-table identifier.",
+        "minLength": 1,
+        "examples": [
+          "tbl_4"
+        ]
+      },
+      "ZoneId": {
+        "type": "string",
+        "description": "Delivery-zone identifier.",
+        "minLength": 1,
+        "examples": [
+          "zone_oak_core"
+        ]
+      },
+      "MenuId": {
+        "type": "string",
+        "description": "Menu identifier.",
+        "minLength": 1,
+        "examples": [
+          "menu_dinner"
+        ]
+      },
+      "ItemId": {
+        "type": "string",
+        "description": "Catalog item identifier.",
+        "minLength": 1,
+        "examples": [
+          "itm_townie"
+        ]
+      },
+      "ModifierGroupId": {
+        "type": "string",
+        "description": "Modifier-group identifier.",
+        "minLength": 1,
+        "examples": [
+          "modg_patty"
+        ]
+      },
+      "ModifierId": {
+        "type": "string",
+        "description": "Modifier-option identifier.",
+        "minLength": 1,
+        "examples": [
+          "mod_bacon"
+        ]
+      },
+      "GuestId": {
+        "type": "string",
+        "description": "Guest identifier.",
+        "minLength": 1,
+        "examples": [
+          "gst_maya"
+        ]
+      },
+      "AddressId": {
+        "type": "string",
+        "description": "Guest address identifier.",
+        "minLength": 1,
+        "examples": [
+          "addr_maya"
+        ]
+      },
+      "EmployeeId": {
+        "type": "string",
+        "description": "Employee identifier.",
+        "minLength": 1,
+        "examples": [
+          "emp_jon"
+        ]
+      },
+      "FulfillmentId": {
+        "type": "string",
+        "description": "Fulfillment identifier.",
+        "minLength": 1,
+        "examples": [
+          "ful_dine_4"
+        ]
+      },
+      "CheckId": {
+        "type": "string",
+        "description": "Check identifier.",
+        "minLength": 1,
+        "examples": [
+          "chk_ok"
+        ]
+      },
+      "TicketId": {
+        "type": "string",
+        "description": "Kitchen ticket identifier.",
+        "minLength": 1,
+        "examples": [
+          "kds_ok"
+        ]
+      },
+      "CourierId": {
+        "type": "string",
+        "description": "Courier identifier.",
+        "minLength": 1,
+        "examples": [
+          "crr_sam"
+        ]
+      },
+      "QuoteId": {
+        "type": "string",
+        "description": "Delivery-quote identifier. Expires in five minutes.",
+        "minLength": 1,
+        "examples": [
+          "qte_1"
+        ]
+      },
+      "DeliveryId": {
+        "type": "string",
+        "description": "Delivery job identifier.",
+        "minLength": 1,
+        "examples": [
+          "dlv_pending"
+        ]
+      },
+      "PaymentId": {
+        "type": "string",
+        "description": "Payment identifier.",
+        "minLength": 1,
+        "examples": [
+          "pay_paid"
+        ]
+      },
+      "ChargeId": {
+        "type": "string",
+        "description": "Processor charge identifier.",
+        "minLength": 1,
+        "examples": [
+          "ch_paid"
+        ]
+      },
+      "InvoiceId": {
+        "type": "string",
+        "description": "Invoice identifier.",
+        "minLength": 1,
+        "examples": [
+          "inv_paid"
+        ]
+      },
+      "ReceiptId": {
+        "type": "string",
+        "description": "Receipt identifier.",
+        "minLength": 1,
+        "examples": [
+          "rcp_paid"
+        ]
+      },
+      "RefundId": {
+        "type": "string",
+        "description": "Refund identifier.",
+        "minLength": 1,
+        "examples": [
+          "rf_1"
+        ]
+      },
+      "GiftCardId": {
+        "type": "string",
+        "description": "Gift-card identifier.",
+        "minLength": 1,
+        "examples": [
+          "gf_25"
+        ]
+      },
+      "OfferId": {
+        "type": "string",
+        "description": "Reward-offer identifier.",
+        "minLength": 1,
+        "examples": [
+          "off_free_fries"
+        ]
+      },
+      "RedemptionId": {
+        "type": "string",
+        "description": "Offer-redemption identifier.",
+        "minLength": 1,
+        "examples": [
+          "rdm_1"
+        ]
+      },
+      "SettlementId": {
+        "type": "string",
+        "description": "Settlement batch identifier.",
+        "minLength": 1,
+        "examples": [
+          "set_today"
+        ]
+      },
       "Error": {
         "type": "object",
         "required": [
@@ -6933,10 +7565,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "name": {
             "type": "string",
@@ -6991,16 +7620,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "tbl_4"
-            ]
+            "$ref": "#/components/schemas/TableId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "label": {
             "type": "string"
@@ -7016,9 +7639,13 @@
             ]
           },
           "check_id": {
-            "type": [
-              "string",
-              "null"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CheckId"
+              },
+              {
+                "type": "null"
+              }
             ],
             "examples": [
               "chk_ok"
@@ -7030,16 +7657,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "zone_oak_core"
-            ]
+            "$ref": "#/components/schemas/ZoneId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "name": {
             "type": "string"
@@ -7101,16 +7722,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "menu_dinner"
-            ]
+            "$ref": "#/components/schemas/MenuId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "name": {
             "type": "string"
@@ -7141,10 +7756,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "itm_townie"
-            ]
+            "$ref": "#/components/schemas/ItemId"
           },
           "name": {
             "type": "string"
@@ -7387,10 +7999,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "gst_maya"
-            ]
+            "$ref": "#/components/schemas/GuestId"
           },
           "name": {
             "type": "string"
@@ -7436,16 +8045,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "addr_maya"
-            ]
+            "$ref": "#/components/schemas/AddressId"
           },
           "guest_id": {
-            "type": "string",
-            "examples": [
-              "gst_maya"
-            ]
+            "$ref": "#/components/schemas/GuestId"
           },
           "line1": {
             "type": "string"
@@ -7468,10 +8071,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "emp_jon"
-            ]
+            "$ref": "#/components/schemas/EmployeeId"
           },
           "name": {
             "type": "string"
@@ -7590,16 +8190,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "ful_dine_4"
-            ]
+            "$ref": "#/components/schemas/FulfillmentId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "type": {
             "type": "string",
@@ -7680,43 +8274,39 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "chk_ok"
-            ]
+            "$ref": "#/components/schemas/CheckId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "table_id": {
-            "type": [
-              "string",
-              "null"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TableId"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "fulfillment_id": {
-            "type": "string",
-            "examples": [
-              "ful_dine_4"
-            ]
+            "$ref": "#/components/schemas/FulfillmentId"
           },
           "guest_id": {
-            "type": [
-              "string",
-              "null"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GuestId"
+              },
+              {
+                "type": "null"
+              }
             ],
             "examples": [
               "gst_maya"
             ]
           },
           "server_id": {
-            "type": "string",
-            "examples": [
-              "emp_jon"
-            ]
+            "$ref": "#/components/schemas/EmployeeId"
           },
           "status": {
             "type": "string",
@@ -7786,16 +8376,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "kds_ok"
-            ]
+            "$ref": "#/components/schemas/TicketId"
           },
           "check_id": {
-            "type": "string",
-            "examples": [
-              "chk_ok"
-            ]
+            "$ref": "#/components/schemas/CheckId"
           },
           "item_ids": {
             "type": "array",
@@ -7817,10 +8401,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "crr_sam"
-            ]
+            "$ref": "#/components/schemas/CourierId"
           },
           "name": {
             "type": "string"
@@ -7857,28 +8438,16 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "qte_1"
-            ]
+            "$ref": "#/components/schemas/QuoteId"
           },
           "location_id": {
-            "type": "string",
-            "examples": [
-              "loc_oak"
-            ]
+            "$ref": "#/components/schemas/LocationId"
           },
           "address_id": {
-            "type": "string",
-            "examples": [
-              "addr_maya"
-            ]
+            "$ref": "#/components/schemas/AddressId"
           },
           "zone_id": {
-            "type": "string",
-            "examples": [
-              "zone_oak_core"
-            ]
+            "$ref": "#/components/schemas/ZoneId"
           },
           "fee_cents": {
             "type": "integer",
@@ -7901,25 +8470,16 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "dlv_pending"
-            ]
+            "$ref": "#/components/schemas/DeliveryId"
           },
           "fulfillment_id": {
-            "type": "string",
-            "examples": [
-              "ful_dlv_1"
-            ]
+            "$ref": "#/components/schemas/FulfillmentId"
           },
           "quote_id": {
-            "type": "string"
+            "$ref": "#/components/schemas/QuoteId"
           },
           "zone_id": {
-            "type": "string",
-            "examples": [
-              "zone_oak_core"
-            ]
+            "$ref": "#/components/schemas/ZoneId"
           },
           "fee_cents": {
             "type": "integer",
@@ -8006,16 +8566,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "pay_paid"
-            ]
+            "$ref": "#/components/schemas/PaymentId"
           },
           "check_id": {
-            "type": "string",
-            "examples": [
-              "chk_ok"
-            ]
+            "$ref": "#/components/schemas/CheckId"
           },
           "method": {
             "type": "string",
@@ -8065,16 +8619,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "ch_paid"
-            ]
+            "$ref": "#/components/schemas/ChargeId"
           },
           "payment_id": {
-            "type": "string",
-            "examples": [
-              "pay_paid"
-            ]
+            "$ref": "#/components/schemas/PaymentId"
           },
           "amount_cents": {
             "type": "integer",
@@ -8106,16 +8654,13 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "examples": [
-              "inv_paid"
-            ]
+            "$ref": "#/components/schemas/InvoiceId"
           },
           "check_id": {
-            "type": "string"
+            "$ref": "#/components/schemas/CheckId"
           },
           "payment_id": {
-            "type": "string"
+            "$ref": "#/components/schemas/PaymentId"
           },
           "amount_cents": {
             "type": "integer",
@@ -8775,6 +9320,284 @@
             ]
           }
         }
+      }
+    },
+    "links": {
+      "GetCheck": {
+        "operationId": "getCheck",
+        "parameters": {
+          "check_id": "$response.body#/check/id"
+        },
+        "description": "Re-fetch. due_cents and version changed."
+      },
+      "GetFulfillment": {
+        "operationId": "getFulfillment",
+        "parameters": {
+          "fulfillment_id": "$response.body#/fulfillment_id"
+        },
+        "description": "Fulfillment stays ready; it does not close."
+      },
+      "CreateCheck": {
+        "operationId": "createCheck",
+        "parameters": {},
+        "description": "Open a check against this fulfillment_id."
+      },
+      "CancelFulfillment": {
+        "operationId": "cancelFulfillment",
+        "parameters": {
+          "fulfillment_id": "$response.body#/fulfillment_id"
+        },
+        "description": "Unpaid path: cancel. Inventory is not restocked."
+      },
+      "HandoffFulfillment": {
+        "operationId": "handoffFulfillment",
+        "parameters": {
+          "fulfillment_id": "$response.body#/id"
+        },
+        "description": "Pickup handoff with the printed code."
+      },
+      "AddItem": {
+        "operationId": "addItem",
+        "parameters": {
+          "check_id": "$response.body#/id"
+        },
+        "description": "Add another line."
+      },
+      "SendOrder": {
+        "operationId": "sendOrder",
+        "parameters": {
+          "check_id": "$response.body#/check/id"
+        },
+        "description": "Send after all lines are on the check."
+      },
+      "ApplyDiscount": {
+        "operationId": "applyDiscount",
+        "parameters": {
+          "check_id": "$response.body#/id"
+        },
+        "description": "Apply a discount code; due changes."
+      },
+      "CreatePayment": {
+        "operationId": "createPayment",
+        "parameters": {},
+        "description": "Pay the new due. Stale amount_cents → 422 amount_mismatch."
+      },
+      "GetReceiptByCheck": {
+        "operationId": "getReceiptByCheck",
+        "parameters": {
+          "check_id": "$response.body#/check_id"
+        },
+        "description": "Itemized receipt."
+      },
+      "VoidCheck": {
+        "operationId": "voidCheck",
+        "parameters": {
+          "check_id": "$response.body#/id"
+        },
+        "description": "Void after a reversed refund."
+      },
+      "AddAnotherItem": {
+        "operationId": "addItem",
+        "parameters": {
+          "check_id": "$response.body#/check/id"
+        },
+        "description": "Add another line to the same check."
+      },
+      "CompleteTicket": {
+        "operationId": "completeTicket",
+        "parameters": {
+          "ticket_id": "$response.body#/ticket/id"
+        },
+        "description": "Bump the new KDS ticket fired or done."
+      },
+      "ListTickets": {
+        "operationId": "listTickets",
+        "parameters": {},
+        "description": "Kitchen board including this ticket."
+      },
+      "GetPayment": {
+        "operationId": "getPayment",
+        "parameters": {
+          "payment_id": "$response.body#/payment_id"
+        },
+        "description": "Payment now captured."
+      },
+      "CreateCharge": {
+        "operationId": "createCharge",
+        "parameters": {},
+        "description": "Capture with pm_ok, or branch on decline/timeout."
+      },
+      "RedeemGiftCard": {
+        "operationId": "redeemGiftCard",
+        "parameters": {},
+        "description": "Capture without a processor charge."
+      },
+      "CreateInvoice": {
+        "operationId": "createInvoice",
+        "parameters": {},
+        "description": "Invoice is allowed after delivered."
+      },
+      "CreateProcessorRefund": {
+        "operationId": "createProcessorRefund",
+        "parameters": {},
+        "description": "Reverse the processor charge next."
+      },
+      "GetInvoice": {
+        "operationId": "getInvoice",
+        "parameters": {
+          "invoice_id": "$response.body#/id"
+        },
+        "description": "Posted invoice."
+      },
+      "AddTip": {
+        "operationId": "addTip",
+        "parameters": {
+          "payment_id": "$response.body#/payment_id"
+        },
+        "description": "Tip after the receipt exists."
+      },
+      "EarnRewards": {
+        "operationId": "earnRewards",
+        "parameters": {},
+        "description": "Write points after payment."
+      },
+      "GetRefund": {
+        "operationId": "getRefund",
+        "parameters": {
+          "refund_id": "$response.body#/refund_id"
+        },
+        "description": "Burgertown refund now reversed. Then POST /v1/checks/{check_id}/void."
+      },
+      "CreateDelivery": {
+        "operationId": "createDelivery",
+        "parameters": {},
+        "description": "Commit the quote to a fulfillment."
+      },
+      "CheckZone": {
+        "operationId": "checkZone",
+        "parameters": {},
+        "description": "Zone check is side-effect free."
+      },
+      "QuoteDelivery": {
+        "operationId": "quoteDelivery",
+        "parameters": {},
+        "description": "Quote fee and ETA when in_zone is true."
+      },
+      "GetDelivery": {
+        "operationId": "getDelivery",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Pending delivery job."
+      },
+      "DispatchDelivery": {
+        "operationId": "dispatchDelivery",
+        "parameters": {},
+        "description": "Assign a courier."
+      },
+      "AcceptDispatch": {
+        "operationId": "acceptDispatch",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Courier accepts. crr_flake → 409 courier_rejected."
+      },
+      "RejectDispatch": {
+        "operationId": "rejectDispatch",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Return the job to pending."
+      },
+      "GetCourier": {
+        "operationId": "getCourier",
+        "parameters": {
+          "courier_id": "$response.body#/courier_id"
+        },
+        "description": "Assigned courier."
+      },
+      "PickupDelivery": {
+        "operationId": "pickupDelivery",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Pickup after the fulfillment is ready."
+      },
+      "PingTracking": {
+        "operationId": "pingTracking",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Append a GeoJSON point (lng, lat)."
+      },
+      "DeliverDelivery": {
+        "operationId": "deliverDelivery",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Complete drop-off. Edge zone needs proof_photo_url."
+      },
+      "FailDelivery": {
+        "operationId": "failDelivery",
+        "parameters": {
+          "delivery_id": "$response.body#/id"
+        },
+        "description": "Mark failed and recover the check."
+      },
+      "AddCourierTip": {
+        "operationId": "addCourierTip",
+        "parameters": {},
+        "description": "Courier tip, once, separate from server tip."
+      },
+      "CreateRefund": {
+        "operationId": "createRefund",
+        "parameters": {},
+        "description": "Paid path: refund then processor reverse then void."
+      },
+      "GetRedemption": {
+        "operationId": "getRedemption",
+        "parameters": {
+          "redemption_id": "$response.body#/redemption/id"
+        },
+        "description": "The applied offer."
+      },
+      "GetLedger": {
+        "operationId": "getLedger",
+        "parameters": {
+          "guest_id": "$response.body#/guest_id"
+        },
+        "description": "Append-only ledger including this earn."
+      },
+      "GetRewards": {
+        "operationId": "getRewards",
+        "parameters": {
+          "guest_id": "$response.body#/id"
+        },
+        "description": "Townie points and tier."
+      },
+      "GetOffer": {
+        "operationId": "getOffer",
+        "parameters": {
+          "offer_id": "$response.body#/data/0/id"
+        },
+        "description": "First eligible offer."
+      },
+      "CreateRedemption": {
+        "operationId": "createRedemption",
+        "parameters": {},
+        "description": "Redeem against an open check."
+      },
+      "ListGuestAddresses": {
+        "operationId": "listGuestAddresses",
+        "parameters": {
+          "guest_id": "$response.body#/id"
+        },
+        "description": "Saved addresses."
+      },
+      "ListItems": {
+        "operationId": "listItems",
+        "parameters": {},
+        "description": "Filter catalog with exclude_allergens from dietary_profile."
       }
     },
     "securitySchemes": {

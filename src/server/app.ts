@@ -1,3 +1,5 @@
+import { readFileSync } from "fs"
+import { join } from "path"
 import { Hono } from "hono"
 import { installAtlasDemoControls, atlasDemoOpenApi } from "@/server/atlas-demo"
 import { cors } from "hono/cors"
@@ -105,6 +107,13 @@ app.get("/openapi.json", (c) => {
   const origin = new URL(c.req.url).origin
   return c.json(atlasDemoOpenApi(buildOpenApi(origin)), 200, {
     "Content-Type": "application/json; charset=utf-8",
+  })
+})
+
+app.get("/arazzo.yaml", (c) => {
+  const body = readFileSync(join(process.cwd(), "arazzo.yaml"), "utf8")
+  return c.text(body, 200, {
+    "Content-Type": "text/yaml; charset=utf-8",
   })
 })
 

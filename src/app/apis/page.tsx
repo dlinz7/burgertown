@@ -18,16 +18,24 @@ export default function ApisPage() {
         <a className="underline" href="/openapi.json">
           /openapi.json
         </a>
+        . How those operations chain is published as Arazzo 1.0.1 at{" "}
+        <a className="underline" href="/arazzo.yaml">
+          /arazzo.yaml
+        </a>
         . Each operation carries request schemas, seeded examples,{" "}
         <code className="text-xs">x-depends-on</code>, and typed error codes.
       </p>
-      <p className="mt-3">
+      <p className="mt-3 text-sm">
         <a
           href="/openapi.json"
           download="burgertown.openapi.json"
-          className="text-sm underline"
+          className="underline"
         >
           Download burgertown.openapi.json
+        </a>
+        <span className="mx-2 text-muted-foreground">·</span>
+        <a href="/arazzo.yaml" className="underline">
+          /arazzo.yaml
         </a>
       </p>
       <div className="mt-8">
