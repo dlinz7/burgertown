@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { installAtlasDemoControls, atlasDemoOpenApi } from "@/server/atlas-demo"
 import { cors } from "hono/cors"
 import { API_CATALOG } from "@/server/catalog"
 import { buildOpenApi } from "@/server/openapi"
@@ -71,6 +72,7 @@ import {
 export const app = new Hono()
 
 app.use("*", cors())
+installAtlasDemoControls(app)
 
 app.notFound((c) =>
   c.json(
@@ -101,7 +103,7 @@ app.get("/health", (c) =>
 
 app.get("/openapi.json", (c) => {
   const origin = new URL(c.req.url).origin
-  return c.json(buildOpenApi(origin), 200, {
+  return c.json(atlasDemoOpenApi(buildOpenApi(origin)), 200, {
     "Content-Type": "application/json; charset=utf-8",
   })
 })

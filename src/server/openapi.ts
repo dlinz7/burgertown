@@ -328,6 +328,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   },
   Fulfillment: {
     type: "object",
+    required: ["id"],
     properties: {
       id: id("ful_dine_4"),
       location_id: id("loc_oak"),
@@ -348,6 +349,7 @@ export const SCHEMAS: Record<string, Record<string, unknown>> = {
   },
   Check: {
     type: "object",
+    required: ["id"],
     properties: {
       id: id("chk_ok"),
       location_id: id("loc_oak"),

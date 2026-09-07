@@ -7,6 +7,17 @@ export { HttpError, jsonError }
 
 let store: Store = createSeed()
 
+/** Run a synchronous polling probe against its own disposable restaurant. */
+export function withIsolatedDemoStore<T>(operation: () => T): T {
+  const original = store
+  store = createSeed()
+  try {
+    return operation()
+  } finally {
+    store = original
+  }
+}
+
 export function getStore() {
   return store
 }
