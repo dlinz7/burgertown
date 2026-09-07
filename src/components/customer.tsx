@@ -22,6 +22,7 @@ import {
   type Selection,
 } from "@/lib/burgertown"
 import { cn } from "@/lib/utils"
+import { getCheckoutAttempt, completeCheckoutAttempt } from "@/lib/checkout-attempt"
 
 function useLoad<T>(loader: () => Promise<T>) {
   const loaderRef = useRef(loader)
@@ -369,10 +370,11 @@ export function BagAndCheckout() {
     submitting.current = true
     setWorking(true)
     try {
-      const response = await api.submitCardOrder(
-        cart.map((line) => ({ item_id: line.itemId, quantity: line.quantity }))
-      )
+      const items = cart.map((line) => ({ item_id: line.itemId, quantity: line.quantity }))
+      const orderId = getCheckoutAttempt("pickup", items)
+      const response = await api.submitCardOrder(items, orderId)
       setOrderChecks(readOrderChecks(response.results))
+      completeCheckoutAttempt("pickup", orderId)
       clearCart()
       toast.success("Your check is ready")
     } catch (err) {

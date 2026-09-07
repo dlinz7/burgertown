@@ -374,6 +374,10 @@
       "description": "API index and health"
     },
     {
+      "name": "Checkout",
+      "description": "Submit checkout items to Atlas"
+    },
+    {
       "name": "Sandbox",
       "description": "Reset seeded store data"
     }
@@ -2275,6 +2279,10 @@
                   "pickup_at": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409. The demo ordering workflow derives this key from the step ID and workflow input order_id. Use a new order_id for each new submission and preserve it for retries; order_id is a workflow input, not a required field on this capability."
                   }
                 }
               },
@@ -2285,6 +2293,11 @@
               }
             }
           }
+        },
+        "x-atlas-safety": {
+          "idempotencyField": "idempotency_key",
+          "compensatedBy": null,
+          "irreversibleAfter": true
         }
       },
       "get": {
@@ -2787,6 +2800,10 @@
                   },
                   "guest_id": {
                     "$ref": "#/components/schemas/GuestId"
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409. The demo ordering workflow derives this key from the step ID and workflow input order_id. Use a new order_id for each new submission and preserve it for retries; order_id is a workflow input, not a required field on this capability."
                   }
                 }
               },
@@ -2797,6 +2814,11 @@
               }
             }
           }
+        },
+        "x-atlas-safety": {
+          "idempotencyField": "idempotency_key",
+          "compensatedBy": null,
+          "irreversibleAfter": true
         }
       }
     },
@@ -3111,6 +3133,14 @@
                   },
                   "notes": {
                     "type": "string"
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409. The demo ordering workflow derives this key from the step ID and workflow input order_id. Use a new order_id for each new submission and preserve it for retries; order_id is a workflow input, not a required field on this capability."
+                  },
+                  "kitchen_note": {
+                    "type": "string",
+                    "description": "Required only while the Atlas contract-change demo is enabled."
                   }
                 }
               },
@@ -3122,6 +3152,32 @@
                 ]
               }
             }
+          }
+        },
+        "x-atlas-safety": {
+          "idempotencyField": "idempotency_key",
+          "compensatedBy": null,
+          "irreversibleAfter": true
+        },
+        "x-atlas-polling": {
+          "method": "POST",
+          "path": "/v1/__control/probe/addItem",
+          "requestBody": {
+            "item_id": "itm_fries",
+            "quantity": 1
+          },
+          "expectedSuccess": {
+            "status": 200
+          },
+          "recognizedError": {
+            "status": 400,
+            "code": "required_field_missing",
+            "codePath": [
+              "code"
+            ],
+            "fieldPathPath": [
+              "fieldPath"
+            ]
           }
         }
       }
@@ -3232,7 +3288,28 @@
           "modifiers",
           "inventory",
           "allergens"
-        ]
+        ],
+        "x-atlas-safety": {
+          "idempotencyField": "idempotency_key",
+          "compensatedBy": null,
+          "irreversibleAfter": true
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409. The demo ordering workflow derives this key from the step ID and workflow input order_id. Use a new order_id for each new submission and preserve it for retries; order_id is a workflow input, not a required field on this capability."
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/kds/tickets": {
@@ -7202,6 +7279,115 @@
         }
       }
     },
+    "/api/atlas/ingest": {
+      "post": {
+        "operationId": "submitCardWorkflow",
+        "tags": [
+          "Checkout"
+        ],
+        "summary": "Submit an item to the Atlas demo ordering workflow",
+        "description": "Submit once per item unit. Use a new order_id for a new submission; reuse the same order_id and item_id when retrying. Burger Town forwards order_id as both the Atlas intake idempotencyKey and payload.order_id, alongside item_id, server_id=emp_jon and location_id=loc_oak. The demo workflow uses order_id as the business key for its four write steps. Reusing an ID with different input is a conflict. This route returns the final capability's JSON response.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "order_id",
+                  "item_id"
+                ],
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "\\S",
+                    "description": "Stable identity for this item submission, preserved across retries.",
+                    "examples": [
+                      "order-123:0:0"
+                    ]
+                  },
+                  "item_id": {
+                    "$ref": "#/components/schemas/ItemId",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  }
+                }
+              },
+              "example": {
+                "order_id": "order-123:0:0",
+                "item_id": "itm_fries"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Final workflow capability response; the demo returns a check and ticket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid item_id or order_id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting reuse of an order ID or Atlas workflow unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Atlas unreachable, workflow execution failed, or invalid final response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Atlas response timed out. Retry with the same order_id and item_id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Atlas rejected the request; its HTTP status is preserved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health",
@@ -8188,6 +8374,9 @@
       },
       "Fulfillment": {
         "type": "object",
+        "required": [
+          "id"
+        ],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/FulfillmentId"
@@ -8272,6 +8461,9 @@
       },
       "Check": {
         "type": "object",
+        "required": [
+          "id"
+        ],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/CheckId"
@@ -9613,5 +9805,35 @@
     {
       "SandboxKey": []
     }
-  ]
+  ],
+  "x-atlas-sandbox": {
+    "healthPath": "/health",
+    "controlPaths": {
+      "resources": "/v1/__control/resources",
+      "faults": "/v1/__control/faults",
+      "observations": "/v1/__control/observations"
+    },
+    "inputs": {
+      "order_id": "burger-town-sandbox-order",
+      "location_id": "loc_oak",
+      "server_id": "emp_jon",
+      "item_id": "itm_fries",
+      "quantity": 1,
+      "fulfillment_id": "ful_pickup_1",
+      "check_id": "chk_ok"
+    },
+    "targetState": {
+      "mode": "replace",
+      "resources": []
+    },
+    "setupAssumptions": [
+      {
+        "path": [
+          "setup",
+          "ready"
+        ],
+        "equals": true
+      }
+    ]
+  }
 }

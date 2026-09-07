@@ -5,6 +5,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { OrderCheckDisplay, readOrderChecks, type OrderCheck } from "@/components/order-check"
+import { getCheckoutAttempt, completeCheckoutAttempt } from "@/lib/checkout-attempt"
 import {
   ApiError,
   api,
@@ -495,8 +496,11 @@ export function TableVisit({ tableId }: { tableId: string }) {
     submitting.current = true
     setWorking("pay")
     try {
-      const response = await api.submitCardOrder(check.items)
+      const scope = `table:${check.id}`
+      const orderId = getCheckoutAttempt(scope, check.items)
+      const response = await api.submitCardOrder(check.items, orderId)
       setOrderChecks(readOrderChecks(response.results))
+      completeCheckoutAttempt(scope, orderId)
       toast.success("Your check is ready")
     } catch (err) {
       toast.error(failMessage(err))

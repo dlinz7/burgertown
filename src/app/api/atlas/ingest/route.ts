@@ -8,6 +8,12 @@ export async function POST(request: Request) {
       { status: 400 }
     )
   }
+  if (typeof input.order_id !== "string" || !input.order_id.trim() || input.order_id.length > 255) {
+    return Response.json(
+      { error: { code: "invalid_order_id", message: "An order_id is required." } },
+      { status: 400 }
+    )
+  }
   let response: Response
   try {
     response = await fetch(process.env.ATLAS_INGEST_URL ?? "http://localhost:4300/ingest", {
@@ -18,7 +24,9 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         workflowName: "demo",
+        idempotencyKey: input.order_id,
         payload: {
+          order_id: input.order_id,
           item_id: input.item_id.trim(),
           server_id: "emp_jon",
           location_id: "loc_oak",

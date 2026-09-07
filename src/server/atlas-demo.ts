@@ -153,7 +153,7 @@ export function atlasDemoOpenApi<T extends { paths: Record<string, unknown> }>(d
       operation["x-atlas-safety"] = { idempotencyField: "idempotency_key", compensatedBy: null, irreversibleAfter: true }
       operation.requestBody ??= { required: false, content: { "application/json": { schema: { type: "object", properties: {} } } } }
       const request = operation.requestBody as { content: { "application/json": { schema: { properties: Record<string, unknown> } } } }
-      request.content["application/json"].schema.properties.idempotency_key = { type: "string", description: "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409." }
+      request.content["application/json"].schema.properties.idempotency_key = { type: "string", description: "Worker-injected per-step idempotency key; successful identical requests replay, conflicting reuse returns 409. The demo ordering workflow derives this key from the step ID and workflow input order_id. Use a new order_id for each new submission and preserve it for retries; order_id is a workflow input, not a required field on this capability." }
     }
   }
   const operation = (document.paths["/v1/checks/{check_id}/items"] as { post: Record<string, unknown> }).post

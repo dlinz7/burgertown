@@ -2,10 +2,11 @@ import assert from "node:assert/strict"
 import { afterEach, test } from "node:test"
 import { POST } from "../app/api/atlas/ingest/route.ts"
 import { submitOrderItems } from "../lib/submit-order-items.ts"
+import { getCheckoutAttempt, completeCheckoutAttempt } from "../lib/checkout-attempt.ts"
 
 const orderRequest = (itemId = "itm_burger") => new Request("http://localhost/api/atlas/ingest", {
   method: "POST",
-  body: JSON.stringify({ item_id: itemId }),
+  body: JSON.stringify({ item_id: itemId, order_id: "order-1:0:0" }),
 })
 
 const originalFetch = globalThis.fetch
@@ -20,7 +21,7 @@ test("sends every selected item unit without dropping quantities", async () => {
   ], async (id) => {
     sent.push(id)
     return { commandId: `command-${sent.length}` }
-  })
+  }, "order-1")
   assert.deepEqual(sent, ["itm_burger", "itm_burger", "itm_fries"])
   assert.equal(result.results.length, 3)
 })
@@ -31,7 +32,7 @@ test("stops on failure and reports partial completion without retrying", async (
     calls += 1
     if (calls === 2) throw new Error("Atlas unavailable")
     return { commandId: "command-1" }
-  }), /1 item workflow\(s\) completed/)
+  }, "order-1"), /1 item workflow\(s\) completed/)
   assert.equal(calls, 2)
 })
 
@@ -41,7 +42,7 @@ test("validates the entire order before submitting any items", async () => {
     await assert.rejects(submitOrderItems([
       { item_id: "itm_burger", quantity: 1 },
       { item_id: "itm_fries", quantity },
-    ], async () => { calls += 1; return { commandId: "unexpected" } }))
+    ], async () => { calls += 1; return { commandId: "unexpected" } }, "order-1"))
   }
   assert.equal(calls, 0)
 })
@@ -66,7 +67,8 @@ test("submits the selected item while preserving the rest of the demo payload", 
     assert.equal(init.headers["Content-Type"], "application/json")
     assert.deepEqual(JSON.parse(init.body), {
       workflowName: "demo",
-      payload: { item_id: "itm_burger", server_id: "emp_jon", location_id: "loc_oak" },
+      idempotencyKey: "order-1:0:0",
+      payload: { order_id: "order-1:0:0", item_id: "itm_burger", server_id: "emp_jon", location_id: "loc_oak" },
     })
     return Response.json({ receipt_id: "receipt-5", total_cents: 1234 }, { headers: { "X-Atlas-Command-Id": "command-1" } })
   }
@@ -75,6 +77,27 @@ test("submits the selected item while preserving the rest of the demo payload", 
   assert.deepEqual(await response.json(), { receipt_id: "receipt-5", total_cents: 1234 })
   assert.equal(response.headers.get("x-atlas-command-id"), "command-1")
   assert.equal(calls, 1)
+})
+
+test("retries reuse each unit's key and a subsequent identical order gets new keys", async () => {
+  const values = new Map()
+  const storage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: (key) => values.delete(key) }
+  const items = [{ item_id: "itm_fries", quantity: 2 }]
+  const orderId = getCheckoutAttempt("pickup", items, storage)
+  const firstKeys = []
+  await assert.rejects(submitOrderItems(items, async (_item, key) => {
+    firstKeys.push(key)
+    if (firstKeys.length === 2) throw new Error("response lost")
+    return {}
+  }, orderId))
+  const retryId = getCheckoutAttempt("pickup", items, storage)
+  assert.equal(retryId, orderId)
+  const retryKeys = []
+  await submitOrderItems(items, async (_item, key) => { retryKeys.push(key); return {} }, retryId)
+  assert.deepEqual(retryKeys, firstKeys)
+  assert.notEqual(retryKeys[0], retryKeys[1])
+  completeCheckoutAttempt("pickup", orderId, storage)
+  assert.notEqual(getCheckoutAttempt("pickup", items, storage), orderId)
 })
 
 test("supports server environment configuration and surfaces rejection", async () => {

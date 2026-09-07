@@ -224,12 +224,12 @@ export const WINDOW_TABLE_ID = "tbl_window"
 export const PUNCHES_FOR_FREE = 10
 
 export const api = {
-  submitCardOrder: (items: { item_id: string; quantity: number }[]) =>
-    submitOrderItems(items, api.submitCardWorkflow),
-  submitCardWorkflow: (itemId: string) =>
+  submitCardOrder: (items: { item_id: string; quantity: number }[], orderId: string) =>
+    submitOrderItems(items, api.submitCardWorkflow, orderId),
+  submitCardWorkflow: (itemId: string, orderId: string) =>
     request<Record<string, unknown>>("/api/atlas/ingest", {
       method: "POST",
-      body: JSON.stringify({ item_id: itemId }),
+      body: JSON.stringify({ item_id: itemId, order_id: orderId }),
     }),
   location: () => request<Location>(`/v1/locations/${LOCATION_ID}`),
   tables: () =>

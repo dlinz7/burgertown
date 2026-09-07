@@ -1930,6 +1930,39 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
       },
     },
   }
+  paths["/api/atlas/ingest"] = {
+    post: {
+      operationId: "submitCardWorkflow",
+      tags: ["Checkout"],
+      summary: "Submit an item to the Atlas demo ordering workflow",
+      description: "Submit once per item unit. Use a new order_id for a new submission; reuse the same order_id and item_id when retrying. Burger Town forwards order_id as both the Atlas intake idempotencyKey and payload.order_id, alongside item_id, server_id=emp_jon and location_id=loc_oak. The demo workflow uses order_id as the business key for its four write steps. Reusing an ID with different input is a conflict. This route returns the final capability's JSON response.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["order_id", "item_id"],
+              properties: {
+                order_id: { type: "string", minLength: 1, maxLength: 255, pattern: "\\S", description: "Stable identity for this item submission, preserved across retries.", examples: ["order-123:0:0"] },
+                item_id: { ...idRef("ItemId"), minLength: 1, pattern: "\\S" },
+              },
+            },
+            example: { order_id: "order-123:0:0", item_id: "itm_fries" },
+          },
+        },
+      },
+      responses: {
+        "200": { description: "Final workflow capability response; the demo returns a check and ticket.", content: jsonContent({ type: "object", additionalProperties: true }) },
+        "400": { description: "Missing or invalid item_id or order_id.", content: jsonContent(ref("Error")) },
+        "409": { description: "Conflicting reuse of an order ID or Atlas workflow unavailable.", content: jsonContent(ref("Error")) },
+        "502": { description: "Atlas unreachable, workflow execution failed, or invalid final response.", content: jsonContent(ref("Error")) },
+        "504": { description: "Atlas response timed out. Retry with the same order_id and item_id.", content: jsonContent(ref("Error")) },
+        default: { description: "Atlas rejected the request; its HTTP status is preserved.", content: jsonContent(ref("Error")) },
+      },
+    },
+  }
   paths["/health"] = {
     get: {
       operationId: "health",
@@ -1982,6 +2015,7 @@ export function buildOpenApi(origin = "http://127.0.0.1:43123") {
         "x-domain": api.domain,
       })),
       { name: "Meta", description: "API index and health" },
+      { name: "Checkout", description: "Submit checkout items to Atlas" },
       { name: "Sandbox", description: "Reset seeded store data" },
     ],
     "x-burgertown": {
