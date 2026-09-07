@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { OrderCheckDisplay, readOrderChecks, type OrderCheck } from "@/components/order-check"
 import {
   ApiError,
   api,
@@ -433,7 +434,7 @@ async function loadVisit(
 
 export function TableVisit({ tableId }: { tableId: string }) {
   const submitting = useRef(false)
-  const [commandId, setCommandId] = useState<string | null>(null)
+  const [orderChecks, setOrderChecks] = useState<OrderCheck[]>([])
   const paidCheckId = useRef<string | null>(null)
   const { data, error, loading, reload } = useLoad(() =>
     loadVisit(tableId, paidCheckId.current)
@@ -494,9 +495,9 @@ export function TableVisit({ tableId }: { tableId: string }) {
     submitting.current = true
     setWorking("pay")
     try {
-      const result = await api.submitCardOrder(check.items)
-      setCommandId(result.commandIds[0])
-      toast.success("Request submitted")
+      const response = await api.submitCardOrder(check.items)
+      setOrderChecks(readOrderChecks(response.results))
+      toast.success("Your check is ready")
     } catch (err) {
       toast.error(failMessage(err))
     } finally {
@@ -519,6 +520,8 @@ export function TableVisit({ tableId }: { tableId: string }) {
       setWorking(null)
     }
   }
+
+  if (orderChecks.length > 0) return <OrderCheckDisplay checks={orderChecks} />
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading the table…</p>
@@ -663,13 +666,8 @@ export function TableVisit({ tableId }: { tableId: string }) {
                 onClick={pay}
                 disabled={check.items.length === 0 || working === "pay"}
               >
-                {working === "pay" ? "Submitting…" : "Pay with card"}
+                {working === "pay" ? "Processing…" : "Pay with card"}
               </Button>
-            ) : null}
-            {commandId ? (
-              <p role="status" className="mt-3 text-sm text-muted-foreground">
-                Request submitted. Payment has not been confirmed.
-              </p>
             ) : null}
             {receipt ? (
               <div className="mt-5 border-t pt-4">

@@ -22,16 +22,16 @@ test("sends every selected item unit without dropping quantities", async () => {
     return { commandId: `command-${sent.length}` }
   })
   assert.deepEqual(sent, ["itm_burger", "itm_burger", "itm_fries"])
-  assert.equal(result.commandIds.length, 3)
+  assert.equal(result.results.length, 3)
 })
 
-test("stops on failure and reports partial acceptance without retrying", async () => {
+test("stops on failure and reports partial completion without retrying", async () => {
   let calls = 0
   await assert.rejects(submitOrderItems([{ item_id: "itm_burger", quantity: 3 }], async () => {
     calls += 1
     if (calls === 2) throw new Error("Atlas unavailable")
     return { commandId: "command-1" }
-  }), /1 item request\(s\) were accepted/)
+  }), /1 item workflow\(s\) completed/)
   assert.equal(calls, 2)
 })
 
@@ -68,11 +68,12 @@ test("submits the selected item while preserving the rest of the demo payload", 
       workflowName: "demo",
       payload: { item_id: "itm_burger", server_id: "emp_jon", location_id: "loc_oak" },
     })
-    return Response.json({ commandId: "command-1" }, { status: 202 })
+    return Response.json({ receipt_id: "receipt-5", total_cents: 1234 }, { headers: { "X-Atlas-Command-Id": "command-1" } })
   }
   const response = await POST(orderRequest())
-  assert.equal(response.status, 202)
-  assert.deepEqual(await response.json(), { commandId: "command-1" })
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { receipt_id: "receipt-5", total_cents: 1234 })
+  assert.equal(response.headers.get("x-atlas-command-id"), "command-1")
   assert.equal(calls, 1)
 })
 
@@ -110,11 +111,11 @@ test("reports network failures without retrying a potentially accepted workflow"
   assert.equal(calls, 1)
 })
 
-test("rejects malformed acceptance and handles non-JSON upstream errors", async () => {
+test("rejects old acceptance and malformed final responses and handles non-JSON upstream errors", async () => {
   for (const upstream of [
     new Response("not JSON", { status: 202 }),
     Response.json({}, { status: 202 }),
-    Response.json({ commandId: "command-1" }, { status: 200 }),
+    Response.json(null, { status: 200 }),
     new Response("Bad gateway", { status: 502 }),
   ]) {
     globalThis.fetch = async () => upstream

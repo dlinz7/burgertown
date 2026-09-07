@@ -7,6 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useShop } from "@/components/shop-provider"
+import { OrderCheckDisplay, readOrderChecks, type OrderCheck } from "@/components/order-check"
 import {
   ApiError,
   PUNCHES_FOR_FREE,
@@ -358,9 +359,9 @@ export function DinnerMenu() {
 }
 
 export function BagAndCheckout() {
-  const { cart, setQuantity, cartCents, guest, loyalty } = useShop()
+  const { cart, setQuantity, cartCents, guest, loyalty, clearCart } = useShop()
   const [working, setWorking] = useState(false)
-  const [commandId, setCommandId] = useState<string | null>(null)
+  const [orderChecks, setOrderChecks] = useState<OrderCheck[]>([])
   const submitting = useRef(false)
 
   async function checkout() {
@@ -368,11 +369,12 @@ export function BagAndCheckout() {
     submitting.current = true
     setWorking(true)
     try {
-      const result = await api.submitCardOrder(
+      const response = await api.submitCardOrder(
         cart.map((line) => ({ item_id: line.itemId, quantity: line.quantity }))
       )
-      setCommandId(result.commandIds[0])
-      toast.success("Request submitted")
+      setOrderChecks(readOrderChecks(response.results))
+      clearCart()
+      toast.success("Your check is ready")
     } catch (err) {
       toast.error(failMessage(err))
     } finally {
@@ -380,6 +382,8 @@ export function BagAndCheckout() {
       setWorking(false)
     }
   }
+
+  if (orderChecks.length > 0) return <OrderCheckDisplay checks={orderChecks} />
 
   if (cart.length === 0) {
     return (
@@ -464,13 +468,8 @@ export function BagAndCheckout() {
           disabled={working}
           onClick={() => void checkout()}
         >
-          {working ? "Submitting…" : "Pay with card"}
+          {working ? "Processing…" : "Pay with card"}
         </Button>
-        {commandId ? (
-          <p role="status" className="mt-3 text-sm text-muted-foreground">
-            Request submitted. Payment has not been confirmed.
-          </p>
-        ) : null}
       </aside>
     </div>
   )

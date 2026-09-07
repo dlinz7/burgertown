@@ -227,7 +227,7 @@ export const api = {
   submitCardOrder: (items: { item_id: string; quantity: number }[]) =>
     submitOrderItems(items, api.submitCardWorkflow),
   submitCardWorkflow: (itemId: string) =>
-    request<{ commandId: string }>("/api/atlas/ingest", {
+    request<Record<string, unknown>>("/api/atlas/ingest", {
       method: "POST",
       body: JSON.stringify({ item_id: itemId }),
     }),
