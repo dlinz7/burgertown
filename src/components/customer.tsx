@@ -14,13 +14,10 @@ import {
   dollars,
   failMessage,
   type CatalogItem,
-  type Check,
   type InventoryRow,
   type Location,
   type Menu,
   type ModifierGroup,
-  type Offer,
-  type Receipt,
   type Selection,
 } from "@/lib/burgertown"
 import { cn } from "@/lib/utils"
@@ -361,141 +358,27 @@ export function DinnerMenu() {
 }
 
 export function BagAndCheckout() {
-  const { cart, setQuantity, cartCents, clearCart, guest, loyalty, refreshLoyalty } =
-    useShop()
-  const [working, setWorking] = useState<string | null>(null)
-  const [receipt, setReceipt] = useState<Receipt | null>(null)
-  const [check, setCheck] = useState<Check | null>(null)
-  const [offerId, setOfferId] = useState("")
-  const [offers, setOffers] = useState<Offer[]>([])
-
-  useEffect(() => {
-    if (!guest) return
-    let cancelled = false
-    void api
-      .offers(guest.id)
-      .then((result) => {
-        if (!cancelled) setOffers(result.data)
-      })
-      .catch(() => {
-        if (!cancelled) setOffers([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [guest])
+  const { cart, setQuantity, cartCents, guest, loyalty } = useShop()
+  const [working, setWorking] = useState(false)
+  const [commandId, setCommandId] = useState<string | null>(null)
+  const submitting = useRef(false)
 
   async function checkout() {
-    if (cart.length === 0) return
-    setWorking("pay")
+    if (cart.length === 0 || submitting.current) return
+    submitting.current = true
+    setWorking(true)
     try {
-      const opened = await api.openPickup(guest?.id)
-      for (const line of cart) {
-        for (let i = 0; i < line.quantity; i += 1) {
-          await api.addItem(
-            opened.id,
-            line.itemId,
-            line.modifierIds,
-            line.selections
-          )
-        }
-      }
-      await api.send(opened.id).catch(() => null)
-      if (guest && offerId) {
-        await api.redeem(opened.id, offerId, guest.id)
-      }
-      const fresh = await api.check(opened.id)
-      const paymentId = await api.pay(fresh)
-      if (guest) {
-        await api.earnLoyalty(guest.id, paymentId).catch(() => null)
-        await refreshLoyalty()
-      }
-      const paid = await api.check(opened.id)
-      const nextReceipt = await api.receiptForCheck(opened.id)
-      setCheck(paid)
-      setReceipt(nextReceipt)
-      clearCart()
-      toast.success("Card captured. We’ll call your name at the window.")
+      const result = await api.submitCardOrder(
+        cart.map((line) => ({ item_id: line.itemId, quantity: line.quantity }))
+      )
+      setCommandId(result.commandIds[0])
+      toast.success("Request submitted")
     } catch (err) {
       toast.error(failMessage(err))
     } finally {
-      setWorking(null)
+      submitting.current = false
+      setWorking(false)
     }
-  }
-
-  async function addTip(percent: number) {
-    if (!receipt) return
-    setWorking("tip")
-    try {
-      const amount = Math.round(receipt.subtotal_cents * (percent / 100))
-      await api.tip(receipt.payment_id, amount)
-      if (check) setReceipt(await api.receiptForCheck(check.id))
-      toast.success(`Tip added (${percent}%)`)
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : failMessage(err))
-    } finally {
-      setWorking(null)
-    }
-  }
-
-  if (receipt) {
-    return (
-      <div className="rounded-2xl border bg-card p-6">
-        <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-          Pickup
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Order’s in
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          We’ll shout when it’s up. Grab it at the Oak Street window.
-        </p>
-        <p className="mt-6 text-sm tabular-nums">
-          Total {dollars(receipt.total_cents)}
-          {receipt.tip_cents > 0
-            ? ` including ${dollars(receipt.tip_cents)} tip`
-            : null}
-        </p>
-        {receipt.tip_cents === 0 && receipt.tip_eligible ? (
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground">Add a tip for the window</p>
-            <div className="mt-2 flex gap-2">
-              {[15, 20, 25].map((percent) => (
-                <Button
-                  key={percent}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={working === "tip"}
-                  onClick={() => addTip(percent)}
-                >
-                  {percent}%
-                </Button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {!guest ? (
-          <p className="mt-6 text-sm">
-            Want punches for this?{" "}
-            <Link href="/rewards" className="underline">
-              Join Townie Rewards
-            </Link>
-            .
-          </p>
-        ) : (
-          <p className="mt-6 text-sm text-muted-foreground">
-            Punches landed on your Townie card.
-          </p>
-        )}
-        <Link
-          href="/menu"
-          className={cn(buttonVariants({ variant: "outline" }), "mt-6 inline-flex")}
-        >
-          Back to the menu
-        </Link>
-      </div>
-    )
   }
 
   if (cart.length === 0) {
@@ -570,23 +453,6 @@ export function BagAndCheckout() {
             before you pay to start a punch card.
           </p>
         )}
-        {guest && offers.length > 0 ? (
-          <div className="mt-3 space-y-2">
-            <p className="text-xs text-muted-foreground">Apply a reward</p>
-            <select
-              className="h-9 w-full rounded-lg border bg-background px-2 text-sm"
-              value={offerId}
-              onChange={(event) => setOfferId(event.target.value)}
-            >
-              <option value="">No offer</option>
-              {offers.map((offer) => (
-                <option key={offer.id} value={offer.id}>
-                  {offer.name} · {offer.points_cost} pts
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
         <div className="mt-4 flex justify-between text-sm font-medium">
           <span>Subtotal</span>
           <span className="tabular-nums">{dollars(cartCents)}</span>
@@ -595,11 +461,16 @@ export function BagAndCheckout() {
         <Button
           type="button"
           className="mt-5 w-full"
-          disabled={working === "pay"}
+          disabled={working}
           onClick={() => void checkout()}
         >
-          {working === "pay" ? "Charging…" : "Pay with card"}
+          {working ? "Submitting…" : "Pay with card"}
         </Button>
+        {commandId ? (
+          <p role="status" className="mt-3 text-sm text-muted-foreground">
+            Request submitted. Payment has not been confirmed.
+          </p>
+        ) : null}
       </aside>
     </div>
   )

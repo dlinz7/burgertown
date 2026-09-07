@@ -33,7 +33,33 @@ In-memory store. `POST /v1/sandbox` with `{ "reset": true }` restores Oak Street
 
 ## Guest site
 
-Order pickup, pay by card, earn punches. Sign in as Maya Chen (`maya@example.com`) to redeem gold-path offers at checkout. Staff picnic-table and kitchen screens still exist at `/tables` and `/kitchen` but are not in the guest nav.
+Both **Pay with card** buttons (`/order` and `/tables/[tableId]`) submit the Atlas
+`demo` workflow through `POST /api/atlas/ingest`. The server calls
+`http://localhost:4300/ingest` with the local caller token and this payload
+(example for fries):
+
+```json
+{"workflowName":"demo","payload":{"item_id":"itm_fries","server_id":"emp_jon","location_id":"loc_oak"}}
+```
+
+Atlas must be running with the `demo` workflow ready for API intake. Override
+`ATLAS_INGEST_URL` and `ATLAS_INGEST_TOKEN` in `.env.local` if needed; these are
+server-only variables. The defaults match the local demo configuration.
+
+The buttons hand off to Atlas instead of running the previous browser checkout
+sequence. Acceptance means the workflow was queued, so the UI keeps the bag and
+does not mark checks paid, issue receipts, redeem rewards, or award punches.
+`item_id` comes from each bag or table-check item. Each unit gets one workflow
+request, so two burgers and fries submit three requests. Workflow name, server,
+and location stay fixed. The existing Atlas payload supports only one item ID;
+modifiers are not sent, and these are separate workflow runs rather than one
+combined order. Submission stops on the first failure and reports any earlier
+accepted requests; check Atlas before retrying a partially submitted order.
+Run `npm run test:atlas` (Node 24+) for integration contract tests.
+
+Browse the pickup menu and manage a bag. Townie Rewards is available at `/rewards`;
+the seeded Maya Chen account uses `maya@example.com`. Staff picnic-table and kitchen
+screens still exist at `/tables` and `/kitchen` but are not in the guest nav.
 
 ## Specs
 

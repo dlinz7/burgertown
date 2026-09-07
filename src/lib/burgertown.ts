@@ -1,3 +1,5 @@
+import { submitOrderItems } from "@/lib/submit-order-items"
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -222,6 +224,13 @@ export const WINDOW_TABLE_ID = "tbl_window"
 export const PUNCHES_FOR_FREE = 10
 
 export const api = {
+  submitCardOrder: (items: { item_id: string; quantity: number }[]) =>
+    submitOrderItems(items, api.submitCardWorkflow),
+  submitCardWorkflow: (itemId: string) =>
+    request<{ commandId: string }>("/api/atlas/ingest", {
+      method: "POST",
+      body: JSON.stringify({ item_id: itemId }),
+    }),
   location: () => request<Location>(`/v1/locations/${LOCATION_ID}`),
   tables: () =>
     request<{ data: Table[] }>(`/v1/locations/${LOCATION_ID}/tables`),

@@ -432,6 +432,8 @@ async function loadVisit(
 }
 
 export function TableVisit({ tableId }: { tableId: string }) {
+  const submitting = useRef(false)
+  const [commandId, setCommandId] = useState<string | null>(null)
   const paidCheckId = useRef<string | null>(null)
   const { data, error, loading, reload } = useLoad(() =>
     loadVisit(tableId, paidCheckId.current)
@@ -488,19 +490,17 @@ export function TableVisit({ tableId }: { tableId: string }) {
   }
 
   async function pay() {
-    if (!check) return
+    if (!check || submitting.current) return
+    submitting.current = true
     setWorking("pay")
     try {
-      const paymentId = await api.pay(check)
-      paidCheckId.current = check.id
-      if (check.guest_id) {
-        await api.earnLoyalty(check.guest_id, paymentId).catch(() => null)
-      }
-      toast.success("Card captured. Add a tip below if you like.")
-      reload({ quiet: true })
+      const result = await api.submitCardOrder(check.items)
+      setCommandId(result.commandIds[0])
+      toast.success("Request submitted")
     } catch (err) {
       toast.error(failMessage(err))
     } finally {
+      submitting.current = false
       setWorking(null)
     }
   }
@@ -663,8 +663,13 @@ export function TableVisit({ tableId }: { tableId: string }) {
                 onClick={pay}
                 disabled={check.items.length === 0 || working === "pay"}
               >
-                Pay with card
+                {working === "pay" ? "Submitting…" : "Pay with card"}
               </Button>
+            ) : null}
+            {commandId ? (
+              <p role="status" className="mt-3 text-sm text-muted-foreground">
+                Request submitted. Payment has not been confirmed.
+              </p>
             ) : null}
             {receipt ? (
               <div className="mt-5 border-t pt-4">
