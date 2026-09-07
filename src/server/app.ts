@@ -94,6 +94,15 @@ app.onError((error, c) => {
   )
 })
 
+function requestOrigin(c: { req: { url: string; header: (name: string) => string | undefined } }) {
+  const host = c.req.header("x-forwarded-host") ?? c.req.header("host")
+  const proto = c.req.header("x-forwarded-proto") ?? "http"
+  if (host && !host.startsWith("0.0.0.0")) {
+    return `${proto}://${host}`
+  }
+  return "http://127.0.0.1:43123"
+}
+
 app.get("/health", (c) =>
   c.json({
     ok: true,
@@ -104,7 +113,7 @@ app.get("/health", (c) =>
 )
 
 app.get("/openapi.json", (c) => {
-  const origin = new URL(c.req.url).origin
+  const origin = requestOrigin(c)
   return c.json(atlasDemoOpenApi(buildOpenApi(origin)), 200, {
     "Content-Type": "application/json; charset=utf-8",
   })
@@ -442,14 +451,14 @@ app.get("/v1/refunds/:refund_id", (c) =>
 )
 
 app.get("/v1/loyalty/accounts/:guest_id", (c) => {
-  const origin = new URL(c.req.url).origin
+  const origin = requestOrigin(c)
   return c.redirect(
     `${origin}/v1/rewards/accounts/${c.req.param("guest_id")}`,
     308
   )
 })
 app.post("/v1/loyalty/accounts/:guest_id/earn", (c) => {
-  const origin = new URL(c.req.url).origin
+  const origin = requestOrigin(c)
   return c.redirect(
     `${origin}/v1/rewards/accounts/${c.req.param("guest_id")}/earn`,
     308
