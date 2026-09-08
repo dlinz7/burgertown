@@ -8,6 +8,7 @@
     "start": "next start --hostname 0.0.0.0 --port 43123 --keepAliveTimeout 1",
     "lint": "eslint",
     "test:atlas": "node --test --test-isolation=none src/scripts/atlas-ingest.test.mjs",
+    "test:reliability": "npx tsx --test src/scripts/atlas-reliability.test.ts",
     "openapi": "npx tsx src/scripts/write-openapi.ts",
     "validate:arazzo": "npx tsx src/scripts/validate-arazzo.ts",
     "test": "npx tsx src/scripts/validate-arazzo.ts"

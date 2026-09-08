@@ -7,6 +7,8 @@ type Observation = { operationId: string; stepId: string | null; method: string;
 type Replay = { fingerprint: string; promise: Promise<{ body: string; status: number }>; resolve: (result: { body: string; status: number }) => void }
 const safeWrites = new Set(["createFulfillment", "createCheck", "addItem", "sendOrder"])
 const state = { broken: false, faults: [] as Fault[], sideEffects: [] as Observation[], replays: new Map<string, Replay>() }
+const reliability = { enabled: false, attempts: 0, injectedFailures: 0 }
+const failedOnce = new Set<string>()
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`
   if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, entry]) => `${JSON.stringify(key)}:${stable(entry)}`).join(",")}}`
@@ -38,6 +40,10 @@ export function installAtlasDemoControls(app: Hono) {
         state.replays.clear()
         state.sideEffects = []
         state.faults = []
+        reliability.enabled = false
+        reliability.attempts = 0
+        reliability.injectedFailures = 0
+        failedOnce.clear()
       }
       return
     }
@@ -73,7 +79,19 @@ export function installAtlasDemoControls(app: Hono) {
       state.replays.set(replayKey, pending)
     }
     try {
-      await next()
+      // Check completed replays first. Never fail an already successful write or disturb sandbox checks.
+      if (operationId === "addItem" && !sandboxStepId && reliability.enabled) {
+        reliability.attempts += 1
+        if (replayKey && !failedOnce.has(replayKey)) {
+          failedOnce.add(replayKey)
+          reliability.injectedFailures += 1
+          c.res = c.json({ error: { type: "TransientDownstream", code: "demo_transient_failure", message: "Demo: addItem temporarily unavailable. Retry with the same idempotency key." } }, 503)
+        } else {
+          await next()
+        }
+      } else {
+        await next()
+      }
       if (pending) {
         pending.resolve({ body: await c.res.clone().text(), status: c.res.status })
         if (c.res.status >= 400) state.replays.delete(replayKey!)
@@ -89,6 +107,18 @@ export function installAtlasDemoControls(app: Hono) {
       state.sideEffects.push({ operationId, stepId, method: c.req.method, path: c.req.path, status: c.res.status })
       if (state.sideEffects.length > 1000) state.sideEffects.shift()
     }
+  })
+
+  const reliabilityStatus = () => ({ operationId: "addItem", failureRate: 1, maxFailuresPerKey: 1, ...reliability })
+  app.get("/v1/__control/reliability", (c) => c.json(reliabilityStatus()))
+  app.put("/v1/__control/reliability", async (c) => {
+    const body = await c.req.json().catch(() => null)
+    if (typeof body?.enabled !== "boolean") return c.json({ error: "Expected enabled boolean" }, 400)
+    reliability.enabled = body.enabled
+    reliability.attempts = 0
+    reliability.injectedFailures = 0
+    failedOnce.clear()
+    return c.json(reliabilityStatus())
   })
 
   app.get("/v1/__control/contract", (c) => c.json({ operationId: "addItem", requiredField: "kitchen_note", broken: state.broken }))

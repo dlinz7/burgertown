@@ -79,7 +79,7 @@ Workflows A–I are in **`GET /arazzo.yaml`** (Arazzo 1.0.1). Validate with `npm
 - **Fulfillment** sits between the floor and the check (dine-in, pickup, delivery)
 - **Payments** depends on Checks, Taxes, Discounts, Redemptions
 - **Redemptions** change `due_cents` — re-fetch before paying or you get `422 amount_mismatch`
-- **Dispatch** `503 no_courier_available` is the only retryable failure
+- **Dispatch** returns `503 no_courier_available`; the optional reliability demo also injects retryable 503s into Add Item.
 
 ## Seeded IDs
 
@@ -99,3 +99,19 @@ Workflows A–I are in **`GET /arazzo.yaml`** (Arazzo 1.0.1). Validate with `npm
 | `crr_sam` / `crr_dee` / `crr_flake` | Couriers (available / offline / rejects) |
 
 Amounts are integer cents. Processor `payment_method` values: `pm_ok`, `pm_decline`, `pm_timeout`.
+
+## Temporal retry demo
+
+Enable exactly one injected HTTP 503 on the first new Add Item attempt per idempotency key, followed by normal execution on retries:
+
+```powershell
+Invoke-RestMethod -Method Put -Uri http://localhost:43123/v1/__control/reliability -ContentType application/json -Body '{"enabled":true}'
+```
+
+Use `{"enabled":false}` to turn it off. `GET /v1/__control/reliability` reports the switch, attempted calls, failure cap, and injected failures; toggling resets the counters and per-key failure memory. The switch starts off after a server restart and is disabled by the sandbox reset endpoint. It is in-memory demo state, not a durable setting. Do not toggle or restart Burger Town between attempts if you want to preserve the per-key failure cap.
+
+Failures happen before the item is added; there is no randomness. After the first injected failure, retries with the same key run normally. Requests without an idempotency key are not failed by this feature, because there is no stable identity with which to enforce the cap. Successful idempotent replays bypass failure injection, conflicting reuse still returns 409, and requests marked `x-atlas-sandbox-step-id` are excluded so workflow validation checks remain deterministic. The control endpoint is intentionally outside the capability OpenAPI catalog.
+
+The active Atlas demo inspected on September 7, 2026 (`workflow-20260907-222502-659`) declares no explicit retry policy. Its worker defaults to three total attempts with 1-second then 2-second delays. No workflow recreation is necessary: at most one injected failure consumes the first attempt, leaving the retry to run normally. Other real errors can still fail an order. Atlas is unchanged by this demo feature.
+
+Use a genuinely new order when demonstrating this: a previously completed capability call replays its saved result. Retries alone demonstrate recovery from transient failures; a worker restart during a pending retry is a separate demonstration of Temporal durability.
